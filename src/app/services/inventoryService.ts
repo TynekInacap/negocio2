@@ -134,6 +134,24 @@ function normalizeSales(sales: Sale[]): Sale[] {
   }));
 }
 
+function toDbProduct(product: Omit<Product, 'id'> & { id?: string }) {
+  const { minStock, ...rest } = product as Omit<Product, 'id'> & { id?: string };
+  return {
+    ...rest,
+    min_stock: minStock,
+  } as const;
+}
+
+function toDbSale(sale: Omit<Sale, 'id'> & { id: string }) {
+  const { items, paymentMethod, customerName, date, ...rest } = sale;
+  return {
+    ...rest,
+    date: date instanceof Date ? date.toISOString() : date,
+    payment_method: paymentMethod,
+    customer_name: customerName,
+  } as const;
+}
+
 export class LocalInventoryService implements InventoryDataService {
   async loadInitialState(): Promise<{ products: Product[]; sales: Sale[] }> {
     const products = readLocalStorage<Product[]>(STORAGE_KEYS.PRODUCTS, SAMPLE_PRODUCTS);
@@ -240,7 +258,7 @@ export class SupabaseInventoryService implements InventoryDataService {
       id: Date.now().toString(),
     };
 
-    const { error } = await this.client.from('products').insert(createdProduct);
+    const { error } = await this.client.from('products').insert(toDbProduct(createdProduct));
     if (error) throw error;
 
     return createdProduct;
@@ -249,7 +267,7 @@ export class SupabaseInventoryService implements InventoryDataService {
   async updateProduct(id: string, product: Omit<Product, 'id'>): Promise<Product> {
     const { data, error } = await this.client
       .from('products')
-      .update(product)
+      .update(toDbProduct(product))
       .eq('id', id)
       .select()
       .single();
@@ -269,11 +287,15 @@ export class SupabaseInventoryService implements InventoryDataService {
       id: Date.now().toString(),
     };
 
-    const { error: salesError } = await this.client.from('sales').insert(createdSale);
+    const { error: salesError } = await this.client.from('sales').insert(toDbSale(createdSale));
     if (salesError) throw salesError;
 
     const saleItems = sale.items.map((item) => ({
-      ...item,
+      product_id: item.productId,
+      product_name: item.productName,
+      quantity: item.quantity,
+      price: item.price,
+      subtotal: item.subtotal,
       sale_id: createdSale.id,
     }));
 
