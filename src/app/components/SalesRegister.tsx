@@ -140,9 +140,9 @@ export function SalesRegister({ products, sales, onAddSale }: SalesRegisterProps
         <p className="text-gray-500">Gestiona tus transacciones</p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-6 xl:grid-cols-3">
         {/* Nueva Venta */}
-        <Card className="lg:col-span-2 border-0 shadow-lg">
+        <Card className="xl:col-span-2 border-0 shadow-lg">
           <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-t-lg">
             <CardTitle className="flex items-center gap-2">
               <ShoppingCart className="h-5 w-5 text-green-600" />
@@ -168,7 +168,7 @@ export function SalesRegister({ products, sales, onAddSale }: SalesRegisterProps
               </div>
               <div className="space-y-2">
                 <Label>Cantidad</Label>
-                <div className="flex gap-2">
+                <div className="flex flex-col gap-2 sm:flex-row">
                   <Input
                     type="number"
                     min="1"
@@ -195,7 +195,7 @@ export function SalesRegister({ products, sales, onAddSale }: SalesRegisterProps
                   <p className="text-sm text-gray-500">Agrega productos para comenzar la venta</p>
                 </div>
               ) : (
-                <Table>
+                <Table className="min-w-[560px]">
                   <TableHeader>
                     <TableRow className="bg-gray-50 hover:bg-gray-50">
                       <TableHead>Producto</TableHead>

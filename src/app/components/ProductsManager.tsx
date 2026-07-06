@@ -137,12 +137,12 @@ export function ProductsManager({ products, onAdd, onUpdate, onDelete }: Product
             </div>
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="gap-2 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 shadow-md">
+                <Button className="w-full gap-2 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 shadow-md sm:w-auto">
                   <Plus className="h-4 w-4" />
                   Agregar Producto
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+              <DialogContent className="max-w-[calc(100vw-1.5rem)] max-h-[90vh] overflow-y-auto sm:max-w-md">
                 <DialogHeader>
                   <DialogTitle>Nuevo Producto</DialogTitle>
                 </DialogHeader>
@@ -243,8 +243,8 @@ export function ProductsManager({ products, onAdd, onUpdate, onDelete }: Product
             />
           </div>
 
-          <div className="rounded-lg border border-gray-200 overflow-hidden">
-            <Table>
+          <div className="overflow-x-auto rounded-lg border border-gray-200">
+            <Table className="min-w-[720px]">
               <TableHeader>
                 <TableRow className="bg-gray-50 hover:bg-gray-50">
                   <TableHead>Producto</TableHead>

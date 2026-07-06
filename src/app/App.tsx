@@ -164,11 +164,11 @@ export default function App() {
   ];
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="flex min-h-screen flex-col bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 lg:flex-row">
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col shadow-lg">
+      <aside className="w-full border-b border-gray-200 bg-white shadow-lg lg:w-64 lg:border-r lg:border-b-0 lg:flex lg:flex-col">
         {/* Header */}
-        <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-indigo-600 to-blue-600">
+        <div className="border-b border-gray-200 bg-gradient-to-r from-indigo-600 to-blue-600 p-4 sm:p-6">
           <div className="flex items-center gap-3">
             <div className="bg-white rounded-lg p-2 shadow-md">
               <Store className="h-6 w-6 text-indigo-600" />
@@ -181,7 +181,7 @@ export default function App() {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-2">
+        <nav className="flex-1 p-3 space-y-2 lg:p-4 lg:space-y-2">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeView === item.id;
@@ -191,7 +191,7 @@ export default function App() {
                 key={item.id}
                 onClick={() => setActiveView(item.id)}
                 className={cn(
-                  "w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200",
+                  "flex w-full items-center gap-3 rounded-lg px-4 py-3 text-sm transition-all duration-200 sm:text-base",
                   isActive
                     ? "bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-md"
                     : "text-gray-700 hover:bg-gray-100 hover:text-indigo-600"
@@ -205,8 +205,8 @@ export default function App() {
         </nav>
 
         {/* Footer */}
-        <div className="p-4 border-t border-gray-200">
-          <div className="bg-gradient-to-r from-indigo-50 to-blue-50 rounded-lg p-3">
+        <div className="hidden border-t border-gray-200 p-4 lg:block">
+          <div className="rounded-lg bg-gradient-to-r from-indigo-50 to-blue-50 p-3">
             <p className="text-xs text-gray-600">Productos totales</p>
             <p className="text-indigo-600">{products.length}</p>
           </div>
@@ -215,7 +215,7 @@ export default function App() {
 
       {/* Main Content */}
       <main className="flex-1 overflow-auto">
-        <div className="p-8">
+        <div className="p-4 sm:p-6 lg:p-8">
           {loadError ? (
             <div className="rounded-lg border border-red-200 bg-red-50 p-4 mb-6 text-sm text-red-700">
               {loadError}
