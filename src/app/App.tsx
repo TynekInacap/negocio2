@@ -4,6 +4,7 @@ import { ProductsManager } from './components/ProductsManager';
 import { SalesRegister } from './components/SalesRegister';
 import { LayoutDashboard, Package, ShoppingCart, Store } from 'lucide-react';
 import { Toaster } from './components/ui/sonner';
+import { toast } from 'sonner';
 import { cn } from './components/ui/utils';
 import { createInventoryService, LocalInventoryService } from './services/inventoryService';
 import { Product, Sale, ViewType } from './types';
@@ -36,37 +37,107 @@ export default function App() {
   }, []);
 
   const addProduct = async (product: Omit<Product, 'id'>) => {
-    const createdProduct = await inventoryService.createProduct(product);
-    setProducts((currentProducts) => [...currentProducts, createdProduct]);
+    try {
+      const createdProduct = await inventoryService.createProduct(product);
+      setProducts((currentProducts) => [...currentProducts, createdProduct]);
+      toast.success('Producto creado');
+    } catch (error) {
+      console.error('createProduct failed:', error);
+      toast.error('No se pudo crear en remoto. Intentando guardar localmente.');
+      try {
+        const createdProduct = await fallbackInventoryService.createProduct(product);
+        setProducts((currentProducts) => [...currentProducts, createdProduct]);
+        toast.success('Producto guardado localmente');
+      } catch (err) {
+        console.error('fallback createProduct failed:', err);
+        toast.error('No se pudo guardar el producto');
+      }
+    }
   };
 
   const updateProduct = async (id: string, updatedProduct: Omit<Product, 'id'>) => {
-    const savedProduct = await inventoryService.updateProduct(id, updatedProduct);
-    setProducts((currentProducts) =>
-      currentProducts.map((product) => (product.id === id ? savedProduct : product))
-    );
+    try {
+      const savedProduct = await inventoryService.updateProduct(id, updatedProduct);
+      setProducts((currentProducts) =>
+        currentProducts.map((product) => (product.id === id ? savedProduct : product))
+      );
+      toast.success('Producto actualizado');
+    } catch (error) {
+      console.error('updateProduct failed:', error);
+      toast.error('No se pudo actualizar en remoto. Intentando guardado local.');
+      try {
+        const savedProduct = await fallbackInventoryService.updateProduct(id, updatedProduct);
+        setProducts((currentProducts) =>
+          currentProducts.map((product) => (product.id === id ? savedProduct : product))
+        );
+        toast.success('Producto actualizado localmente');
+      } catch (err) {
+        console.error('fallback updateProduct failed:', err);
+        toast.error('No se pudo actualizar el producto');
+      }
+    }
   };
 
   const deleteProduct = async (id: string) => {
-    await inventoryService.deleteProduct(id);
-    setProducts((currentProducts) => currentProducts.filter((product) => product.id !== id));
+    try {
+      await inventoryService.deleteProduct(id);
+      setProducts((currentProducts) => currentProducts.filter((product) => product.id !== id));
+      toast.success('Producto eliminado');
+    } catch (error) {
+      console.error('deleteProduct failed:', error);
+      toast.error('No se pudo eliminar en remoto. Intentando eliminar localmente.');
+      try {
+        await fallbackInventoryService.deleteProduct(id);
+        setProducts((currentProducts) => currentProducts.filter((product) => product.id !== id));
+        toast.success('Producto eliminado localmente');
+      } catch (err) {
+        console.error('fallback deleteProduct failed:', err);
+        toast.error('No se pudo eliminar el producto');
+      }
+    }
   };
 
   const addSale = async (sale: Omit<Sale, 'id'>) => {
-    const createdSale = await inventoryService.createSale(sale);
+    try {
+      const createdSale = await inventoryService.createSale(sale);
 
-    const updatedProducts = products.map((product) => {
-      const matchingItem = sale.items.find((item) => item.productId === product.id);
-      if (!matchingItem) return product;
+      const updatedProducts = products.map((product) => {
+        const matchingItem = sale.items.find((item) => item.productId === product.id);
+        if (!matchingItem) return product;
 
-      return {
-        ...product,
-        stock: product.stock - matchingItem.quantity,
-      };
-    });
+        return {
+          ...product,
+          stock: product.stock - matchingItem.quantity,
+        };
+      });
 
-    setProducts(updatedProducts);
-    setSales((currentSales) => [createdSale, ...currentSales]);
+      setProducts(updatedProducts);
+      setSales((currentSales) => [createdSale, ...currentSales]);
+      toast.success('Venta registrada');
+    } catch (error) {
+      console.error('createSale failed:', error);
+      toast.error('No se pudo registrar la venta en remoto. Intentando localmente.');
+      try {
+        const createdSale = await fallbackInventoryService.createSale(sale);
+
+        const updatedProducts = products.map((product) => {
+          const matchingItem = sale.items.find((item) => item.productId === product.id);
+          if (!matchingItem) return product;
+
+          return {
+            ...product,
+            stock: product.stock - matchingItem.quantity,
+          };
+        });
+
+        setProducts(updatedProducts);
+        setSales((currentSales) => [createdSale, ...currentSales]);
+        toast.success('Venta registrada localmente');
+      } catch (err) {
+        console.error('fallback createSale failed:', err);
+        toast.error('No se pudo registrar la venta');
+      }
+    }
   };
 
   const navItems = [
