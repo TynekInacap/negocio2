@@ -1,4 +1,4 @@
-import { supabase } from '../../lib/supabase';
+import { createSupabaseClient, hasSupabaseConfig } from '../../lib/supabase';
 import { Product, Sale, InventoryDataService } from '../types';
 
 const STORAGE_KEYS = {
@@ -189,28 +189,48 @@ export class LocalInventoryService implements InventoryDataService {
 }
 
 export class SupabaseInventoryService implements InventoryDataService {
-  private client = supabase;
+  private client = createSupabaseClient();
 
   private safeDate(date: string | Date): Date {
     return date instanceof Date ? date : new Date(date);
   }
 
   async loadInitialState(): Promise<{ products: Product[]; sales: Sale[] }> {
-    const [{ data: products, error: productsError }, { data: sales, error: salesError }] =
+    const [{ data: products, error: productsError }, { data: salesWithItems, error: salesError }] =
       await Promise.all([
         this.client.from<Product>('products').select('*'),
         this.client
-          .from<Sale>('sales')
-          .select('*')
+          .from('sales')
+          .select('*, sale_items(*)')
           .order('date', { ascending: false }),
       ]);
 
     if (productsError) throw productsError;
     if (salesError) throw salesError;
 
+    const normalizedProducts = (products ?? []).map((product) => ({
+      ...product,
+      minStock: (product as any).min_stock ?? product.minStock,
+    })) as Product[];
+
+    const normalizedSales = (salesWithItems ?? []).map((sale: any) => ({
+      id: sale.id,
+      date: this.safeDate(sale.date),
+      total: sale.total,
+      paymentMethod: sale.payment_method ?? sale.paymentMethod,
+      customerName: sale.customer_name ?? sale.customerName,
+      items: (sale.sale_items ?? []).map((item: any) => ({
+        productId: item.product_id ?? item.productId,
+        productName: item.product_name ?? item.productName,
+        quantity: item.quantity,
+        price: item.price,
+        subtotal: item.subtotal,
+      })),
+    })) as Sale[];
+
     return {
-      products: products ?? [],
-      sales: normalizeSales(sales ?? []),
+      products: normalizedProducts,
+      sales: normalizedSales,
     };
   }
 
@@ -265,7 +285,7 @@ export class SupabaseInventoryService implements InventoryDataService {
 }
 
 export function createInventoryService(): InventoryDataService {
-  if (import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY) {
+  if (hasSupabaseConfig()) {
     return new SupabaseInventoryService();
   }
 

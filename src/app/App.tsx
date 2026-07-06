@@ -5,21 +5,31 @@ import { SalesRegister } from './components/SalesRegister';
 import { LayoutDashboard, Package, ShoppingCart, Store } from 'lucide-react';
 import { Toaster } from './components/ui/sonner';
 import { cn } from './components/ui/utils';
-import { createInventoryService } from './services/inventoryService';
+import { createInventoryService, LocalInventoryService } from './services/inventoryService';
 import { Product, Sale, ViewType } from './types';
 
 const inventoryService = createInventoryService();
+const fallbackInventoryService = new LocalInventoryService();
 
 export default function App() {
   const [products, setProducts] = useState<Product[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
   const [activeView, setActiveView] = useState<ViewType>('dashboard');
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadState = async () => {
-      const { products: initialProducts, sales: initialSales } = await inventoryService.loadInitialState();
-      setProducts(initialProducts);
-      setSales(initialSales);
+      try {
+        const { products: initialProducts, sales: initialSales } = await inventoryService.loadInitialState();
+        setProducts(initialProducts);
+        setSales(initialSales);
+      } catch (error) {
+        console.error('Supabase load failed, falling back to local state:', error);
+        setLoadError('No se pudo cargar la base de datos remota. Usando datos locales.');
+        const { products: initialProducts, sales: initialSales } = await fallbackInventoryService.loadInitialState();
+        setProducts(initialProducts);
+        setSales(initialSales);
+      }
     };
 
     void loadState();
@@ -130,6 +140,11 @@ export default function App() {
       {/* Main Content */}
       <main className="flex-1 overflow-auto">
         <div className="p-8">
+          {loadError ? (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-4 mb-6 text-sm text-red-700">
+              {loadError}
+            </div>
+          ) : null}
           {activeView === 'dashboard' && (
             <Dashboard products={products} sales={sales} />
           )}
