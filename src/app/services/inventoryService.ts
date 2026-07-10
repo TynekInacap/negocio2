@@ -115,7 +115,7 @@ export class SupabaseInventoryService implements InventoryDataService {
   async loadInitialState(): Promise<{ products: Product[]; sales: Sale[] }> {
     const [{ data: products, error: productsError }, { data: salesWithItems, error: salesError }] =
       await Promise.all([
-        this.client.from<Product>('products').select('*'),
+        this.client.from('products').select('*'),
         this.client
           .from('sales')
           .select('*, sale_items(*)')

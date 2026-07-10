@@ -1,22 +1,26 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { Dashboard } from './components/Dashboard';
 import { ProductsManager } from './components/ProductsManager';
 import { SalesRegister } from './components/SalesRegister';
+import { Auth } from './components/Auth';
 import { LayoutDashboard, Package, ShoppingCart, Store } from 'lucide-react';
 import { Toaster } from './components/ui/sonner';
 import { toast } from 'sonner';
 import { cn } from './components/ui/utils';
 import { createInventoryService, LocalInventoryService } from './services/inventoryService';
-import { hasSupabaseConfig } from '../lib/supabase';
+import { hasSupabaseConfig, createSupabaseClient } from '../lib/supabase';
 import { Product, Sale, ViewType } from './types';
 
 const inventoryService = createInventoryService();
 const fallbackInventoryService = new LocalInventoryService();
+const isSupabaseConfigured = hasSupabaseConfig();
+const supabaseClient = isSupabaseConfigured ? createSupabaseClient() : null;
 
 export default function App() {
   const [products, setProducts] = useState<Product[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
   const [activeView, setActiveView] = useState<ViewType>('dashboard');
+  const [user, setUser] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -40,6 +44,10 @@ export default function App() {
 
     void loadState();
   }, []);
+
+  const handleSignInSuccess = (userEmail: string) => {
+    setUser(userEmail);
+  };
 
   const addProduct = async (product: Omit<Product, 'id'>) => {
     try {
@@ -164,85 +172,95 @@ export default function App() {
   ];
 
   return (
-    <div className="flex min-h-screen flex-col bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 lg:flex-row">
-      {/* Sidebar */}
-      <aside className="w-full border-b border-gray-200 bg-white shadow-lg lg:w-64 lg:border-r lg:border-b-0 lg:flex lg:flex-col">
-        {/* Header */}
-        <div className="border-b border-gray-200 bg-gradient-to-r from-indigo-600 to-blue-600 p-4 sm:p-6">
-          <div className="flex items-center gap-3">
-            <div className="bg-white rounded-lg p-2 shadow-md">
-              <Store className="h-6 w-6 text-indigo-600" />
+    <div className="min-h-screen bg-slate-50">
+      {!user ? (
+        <Auth
+          client={supabaseClient}
+          onSuccess={(userEmail) => handleSignInSuccess(userEmail)}
+          isLocal={!isSupabaseConfigured}
+        />
+      ) : (
+        <div className="flex min-h-screen flex-col bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 lg:flex-row">
+          {/* Sidebar */}
+          <aside className="w-full border-b border-gray-200 bg-white shadow-lg lg:w-64 lg:border-r lg:border-b-0 lg:flex lg:flex-col">
+            {/* Header */}
+            <div className="border-b border-gray-200 bg-gradient-to-r from-indigo-600 to-blue-600 p-4 sm:p-6">
+              <div className="flex items-center gap-3">
+                <div className="bg-white rounded-lg p-2 shadow-md">
+                  <Store className="h-6 w-6 text-indigo-600" />
+                </div>
+                <div>
+                  <h1 className="text-white">Pixel Ink</h1>
+                  <p className="text-xs text-indigo-100">Sistema de Gestión</p>
+                </div>
+              </div>
             </div>
-            <div>
-              <h1 className="text-white">Pixel Ink</h1>
-              <p className="text-xs text-indigo-100">Sistema de Gestión</p>
+
+            {/* Navigation */}
+            <nav className="flex-1 p-3 space-y-2 lg:p-4 lg:space-y-2">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = activeView === item.id;
+
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveView(item.id)}
+                    className={cn(
+                      "flex w-full items-center gap-3 rounded-lg px-4 py-3 text-sm transition-all duration-200 sm:text-base",
+                      isActive
+                        ? "bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-md"
+                        : "text-gray-700 hover:bg-gray-100 hover:text-indigo-600"
+                    )}
+                  >
+                    <Icon className={cn("h-5 w-5", isActive && "text-white")} />
+                    <span className={cn(isActive && "font-medium")}>{item.label}</span>
+                  </button>
+                );
+              })}
+            </nav>
+
+            {/* Footer */}
+            <div className="hidden border-t border-gray-200 p-4 lg:block">
+              <div className="rounded-lg bg-gradient-to-r from-indigo-50 to-blue-50 p-3">
+                <p className="text-xs text-gray-600">Productos totales</p>
+                <p className="text-indigo-600">{products.length}</p>
+              </div>
             </div>
-          </div>
-        </div>
+          </aside>
 
-        {/* Navigation */}
-        <nav className="flex-1 p-3 space-y-2 lg:p-4 lg:space-y-2">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeView === item.id;
-            
-            return (
-              <button
-                key={item.id}
-                onClick={() => setActiveView(item.id)}
-                className={cn(
-                  "flex w-full items-center gap-3 rounded-lg px-4 py-3 text-sm transition-all duration-200 sm:text-base",
-                  isActive
-                    ? "bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-md"
-                    : "text-gray-700 hover:bg-gray-100 hover:text-indigo-600"
-                )}
-              >
-                <Icon className={cn("h-5 w-5", isActive && "text-white")} />
-                <span className={cn(isActive && "font-medium")}>{item.label}</span>
-              </button>
-            );
-          })}
-        </nav>
-
-        {/* Footer */}
-        <div className="hidden border-t border-gray-200 p-4 lg:block">
-          <div className="rounded-lg bg-gradient-to-r from-indigo-50 to-blue-50 p-3">
-            <p className="text-xs text-gray-600">Productos totales</p>
-            <p className="text-indigo-600">{products.length}</p>
-          </div>
-        </div>
-      </aside>
-
-      {/* Main Content */}
-      <main className="flex-1 overflow-auto">
-        <div className="p-4 sm:p-6 lg:p-8">
-          {loadError ? (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-4 mb-6 text-sm text-red-700">
-              {loadError}
+          {/* Main Content */}
+          <main className="flex-1 overflow-auto">
+            <div className="p-4 sm:p-6 lg:p-8">
+              {loadError ? (
+                <div className="rounded-lg border border-red-200 bg-red-50 p-4 mb-6 text-sm text-red-700">
+                  {loadError}
+                </div>
+              ) : null}
+              {activeView === 'dashboard' && (
+                <Dashboard products={products} sales={sales} />
+              )}
+              {activeView === 'products' && (
+                <ProductsManager
+                  products={products}
+                  onAdd={addProduct}
+                  onUpdate={updateProduct}
+                  onDelete={deleteProduct}
+                />
+              )}
+              {activeView === 'sales' && (
+                <SalesRegister
+                  products={products}
+                  sales={sales}
+                  onAddSale={addSale}
+                />
+              )}
             </div>
-          ) : null}
-          {activeView === 'dashboard' && (
-            <Dashboard products={products} sales={sales} />
-          )}
-          {activeView === 'products' && (
-            <ProductsManager
-              products={products}
-              onAdd={addProduct}
-              onUpdate={updateProduct}
-              onDelete={deleteProduct}
-            />
-          )}
-          {activeView === 'sales' && (
-            <SalesRegister
-              products={products}
-              sales={sales}
-              onAddSale={addSale}
-            />
-          )}
-        </div>
-      </main>
+          </main>
 
-      <Toaster />
+          <Toaster />
+        </div>
+      )}
     </div>
   );
 }
