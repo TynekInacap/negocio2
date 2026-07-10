@@ -42,6 +42,31 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [emailExists, setEmailExists] = useState<boolean | null>(null);
+  const [checkingEmail, setCheckingEmail] = useState(false);
+
+  const checkEmailExists = async () => {
+    if (!email.trim()) {
+      toast.error('Ingresa un correo antes de verificar.');
+      return;
+    }
+
+    setCheckingEmail(true);
+    setEmailExists(null);
+
+    try {
+      if (!client || isLocal) {
+        const users = readLocalUsers();
+        const exists = users.some((user) => user.email === email.trim().toLowerCase());
+        setEmailExists(exists);
+        toast.success(exists ? 'El correo ya está registrado.' : 'El correo no existe en el registro local.');
+      } else {
+        toast.error('No se puede verificar el correo directamente desde el cliente Supabase sin un endpoint seguro.');
+      }
+    } finally {
+      setCheckingEmail(false);
+    }
+  };
 
   const handleEmailAuth = async () => {
     if (!email.trim() || !password) {
@@ -137,7 +162,7 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
     }
   };
 
-  const handleOAuth = async () => {
+  const handleOAuth = async (useLoginHint = false) => {
     if (!client) {
       toast.error('OAuth no está disponible en modo local');
       return;
@@ -146,10 +171,15 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
     setLoading(true);
 
     try {
+      const queryParams = useLoginHint && email.trim()
+        ? { login_hint: email.trim().toLowerCase() }
+        : undefined;
+
       const { error } = await client.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: window.location.origin,
+          queryParams,
         },
       });
 
@@ -184,8 +214,26 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
                 type="email"
                 placeholder="ejemplo@correo.com"
                 value={email}
-                onChange={(event) => setEmail(event.target.value)}
+                onChange={(event) => {
+                  setEmail(event.target.value);
+                  setEmailExists(null);
+                }}
               />
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={checkEmailExists}
+                  disabled={loading || checkingEmail}
+                >
+                  {checkingEmail ? 'Verificando...' : 'Verificar correo'}
+                </Button>
+                {emailExists !== null ? (
+                  <span className={`text-sm ${emailExists ? 'text-emerald-600' : 'text-rose-600'}`}>
+                    {emailExists ? 'Correo registrado' : 'Correo no encontrado'}
+                  </span>
+                ) : null}
+              </div>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="password">Contraseña</Label>
@@ -224,13 +272,24 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
             <Button
               variant="outline"
               className="w-full justify-center"
-              onClick={handleOAuth}
+              onClick={() => handleOAuth(false)}
               disabled={loading || !client}
             >
               <LogIn className="h-4 w-4" />
               Google
             </Button>
+            <Button
+              variant="secondary"
+              className="w-full justify-center"
+              onClick={() => handleOAuth(true)}
+              disabled={loading || !client || !email.trim()}
+            >
+              Verificar correo en Google
+            </Button>
           </div>
+          <p className="mt-3 text-xs text-slate-400">
+            Si ingresas un correo, se usará como sugerencia en el inicio de sesión de Google.
+          </p>
           {!client ? (
             <p className="mt-3 text-center text-xs text-slate-400">
               Inicio de sesión local activado: usa email y contraseña. Google OAuth no está disponible.
