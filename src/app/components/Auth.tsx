@@ -100,11 +100,6 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
         toast.error('La contraseña debe tener al menos 8 caracteres');
         return;
       }
-
-      if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password)) {
-        toast.error('La contraseña debe incluir mayúsculas, minúsculas y números');
-        return;
-      }
     }
 
     setLoading(true);
