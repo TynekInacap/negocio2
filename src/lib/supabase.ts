@@ -59,8 +59,17 @@ export function createSupabaseClient(): SupabaseClient {
   );
 
   if (!supabaseUrl || !supabaseKey) {
+    console.error('Supabase variables missing', {
+      supabaseUrl: Boolean(supabaseUrl),
+      supabaseKey: Boolean(supabaseKey),
+    });
     throw new Error('Missing Supabase environment variables');
   }
+
+  console.log('Supabase env loaded', {
+    supabaseUrl,
+    hasSupabaseKey: Boolean(supabaseKey),
+  });
 
   return createClient(supabaseUrl, supabaseKey);
 }
