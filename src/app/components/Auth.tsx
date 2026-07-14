@@ -147,7 +147,12 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
           },
         });
 
-        if (error) throw error;
+        console.log('signUp result', { data, error });
+
+        if (error) {
+          console.error('signUp error', error);
+          throw error;
+        }
 
         setShowBusinessNameSetup(true);
         toast.success('Registro realizado. Personaliza el nombre de tu negocio.');
@@ -158,7 +163,12 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
           password,
         });
 
-        if (error) throw error;
+        console.log('signIn result', { data, error });
+
+        if (error) {
+          console.error('signIn error', error);
+          throw error;
+        }
 
         if (data?.user) {
           onSuccess(data.user.email ?? email, readBusinessName(data.user.email ?? email) ?? undefined);
