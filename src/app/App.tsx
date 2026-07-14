@@ -21,6 +21,7 @@ export default function App() {
   const [sales, setSales] = useState<Sale[]>([]);
   const [activeView, setActiveView] = useState<ViewType>('dashboard');
   const [user, setUser] = useState<string | null>(null);
+  const [businessName, setBusinessName] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -45,8 +46,11 @@ export default function App() {
     void loadState();
   }, []);
 
-  const handleSignInSuccess = (userEmail: string) => {
+  const handleSignInSuccess = (userEmail: string, nextBusinessName?: string) => {
     setUser(userEmail);
+    if (nextBusinessName) {
+      setBusinessName(nextBusinessName);
+    }
   };
 
   const addProduct = async (product: Omit<Product, 'id'>) => {
@@ -176,7 +180,7 @@ export default function App() {
       {!user ? (
         <Auth
           client={supabaseClient}
-          onSuccess={(userEmail) => handleSignInSuccess(userEmail)}
+          onSuccess={(userEmail, nextBusinessName) => handleSignInSuccess(userEmail, nextBusinessName)}
           isLocal={!isSupabaseConfigured}
         />
       ) : (
@@ -190,7 +194,7 @@ export default function App() {
                   <Store className="h-6 w-6 text-indigo-600" />
                 </div>
                 <div>
-                  <h1 className="text-white">Pixel Ink</h1>
+                  <h1 className="text-white">{businessName || 'Stokly'}</h1>
                   <p className="text-xs text-indigo-100">Sistema de Gestión</p>
                 </div>
               </div>

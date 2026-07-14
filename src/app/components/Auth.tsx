@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LogIn, ShieldCheck } from 'lucide-react';
+import { LogIn, ShieldCheck, Sparkles, Lock, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { Button } from './ui/button';
@@ -10,7 +10,7 @@ import { Label } from './ui/label';
 interface AuthProps {
   client?: SupabaseClient | null;
   isLocal?: boolean;
-  onSuccess: (userEmail: string) => void;
+  onSuccess: (userEmail: string, businessName?: string) => void;
 }
 
 interface LocalUser {
@@ -36,36 +36,38 @@ function saveLocalUsers(users: LocalUser[]) {
   window.localStorage.setItem(LOCAL_USERS_KEY, JSON.stringify(users));
 }
 
+function readBusinessName(email?: string): string | null {
+  if (typeof window === 'undefined') return null;
+  const normalizedEmail = email?.trim().toLowerCase();
+  if (!normalizedEmail) return null;
+  const stored = window.localStorage.getItem(`stokly-business-name:${normalizedEmail}`);
+  return stored || null;
+}
+
+function saveBusinessName(email: string, businessName: string) {
+  if (typeof window === 'undefined') return;
+  const normalizedEmail = email.trim().toLowerCase();
+  if (!normalizedEmail) return;
+  window.localStorage.setItem(`stokly-business-name:${normalizedEmail}`, businessName.trim());
+}
+
 export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
   const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [emailExists, setEmailExists] = useState<boolean | null>(null);
-  const [checkingEmail, setCheckingEmail] = useState(false);
+  const [showBusinessNameSetup, setShowBusinessNameSetup] = useState(false);
+  const [businessNameInput, setBusinessNameInput] = useState('');
 
-  const checkEmailExists = async () => {
-    if (!email.trim()) {
-      toast.error('Ingresa un correo antes de verificar.');
-      return;
-    }
+  const handleBusinessNameComplete = (skip = false) => {
+    const normalizedEmail = email.trim().toLowerCase();
+    const finalName = skip ? 'Mi negocio' : businessNameInput.trim() || 'Mi negocio';
 
-    setCheckingEmail(true);
-    setEmailExists(null);
-
-    try {
-      if (!client || isLocal) {
-        const users = readLocalUsers();
-        const exists = users.some((user) => user.email === email.trim().toLowerCase());
-        setEmailExists(exists);
-        toast.success(exists ? 'El correo ya está registrado.' : 'El correo no existe en el registro local.');
-      } else {
-        toast.error('No se puede verificar el correo directamente desde el cliente Supabase sin un endpoint seguro.');
-      }
-    } finally {
-      setCheckingEmail(false);
-    }
+    saveBusinessName(normalizedEmail, finalName);
+    setShowBusinessNameSetup(false);
+    setBusinessNameInput('');
+    onSuccess(normalizedEmail, finalName);
   };
 
   const handleEmailAuth = async () => {
@@ -111,15 +113,16 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
 
           const nextUsers = [...users, { email: email.trim().toLowerCase(), password }];
           saveLocalUsers(nextUsers);
-          onSuccess(email.trim().toLowerCase());
-          toast.success('Registro completo. Bienvenido.');
+          setShowBusinessNameSetup(true);
+          toast.success('Registro completo. Personaliza el nombre de tu negocio.');
+          return;
         } else {
           if (!existingUser || existingUser.password !== password) {
             toast.error('Correo o contraseña incorrectos');
             return;
           }
 
-          onSuccess(existingUser.email);
+          onSuccess(existingUser.email, readBusinessName(existingUser.email) ?? undefined);
           toast.success('Inicio de sesión exitoso.');
         }
 
@@ -137,8 +140,8 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
 
         if (error) throw error;
 
-        toast.success('Registro realizado. Revisa tu correo para confirmar tu cuenta.');
-        setIsRegister(false);
+        setShowBusinessNameSetup(true);
+        toast.success('Registro realizado. Personaliza el nombre de tu negocio.');
         return;
       } else {
         const { data, error } = await client.auth.signInWithPassword({
@@ -149,7 +152,7 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
         if (error) throw error;
 
         if (data?.user) {
-          onSuccess(data.user.email ?? email);
+          onSuccess(data.user.email ?? email, readBusinessName(data.user.email ?? email) ?? undefined);
           toast.success('Inicio de sesión exitoso.');
         } else {
           toast.error('No se pudo iniciar sesión.');
@@ -193,126 +196,168 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-4">
-      <Card className="w-full max-w-lg rounded-[2rem] border border-slate-200 bg-white/95 shadow-2xl">
-        <CardHeader className="gap-2 px-8 pt-10 pb-4 text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-3xl bg-indigo-600 text-white">
-            <ShieldCheck className="h-6 w-6" />
+    <div className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top_left,_rgba(129,140,248,0.18),_transparent_35%),linear-gradient(135deg,_#f8fafc_0%,_#eef2ff_45%,_#f8fafc_100%)] p-4">
+      <div className="w-full max-w-5xl overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white/90 shadow-[0_25px_80px_-20px_rgba(15,23,42,0.35)] backdrop-blur">
+        <div className="grid lg:grid-cols-[1.05fr_0.95fr]">
+          <div className="hidden lg:flex flex-col justify-between bg-gradient-to-br from-indigo-600 via-violet-600 to-sky-500 p-10 text-white">
+            <div>
+              <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15 backdrop-blur">
+                <Sparkles className="h-6 w-6" />
+              </div>
+              <h2 className="text-3xl font-semibold tracking-tight">Gestiona tu negocio con estilo</h2>
+              <p className="mt-3 max-w-md text-sm leading-6 text-indigo-50/90">
+                Centraliza productos, ventas y operaciones en una sola plataforma elegante y sencilla.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur">
+              <p className="text-sm font-medium">Acceso seguro</p>
+              <p className="mt-1 text-sm text-indigo-50/85">Tu información protegida con una experiencia moderna y fluida.</p>
+            </div>
           </div>
-          <CardTitle className="text-2xl font-semibold">Accede a Pixel Ink</CardTitle>
-          <CardDescription className="text-sm text-slate-500">
-            Usa tu correo y contraseña o regístrate rápidamente con Google.
-          </CardDescription>
-        </CardHeader>
 
-        <CardContent className="px-8 pb-6">
-          <div className="grid gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="email">Correo electrónico</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="ejemplo@correo.com"
-                value={email}
-                onChange={(event) => {
-                  setEmail(event.target.value);
-                  setEmailExists(null);
-                }}
-              />
-              <div className="flex items-center gap-2">
+          <Card className="border-0 bg-transparent shadow-none">
+            <CardHeader className="gap-3 px-8 pt-10 pb-4 text-center sm:px-10">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl bg-indigo-600 text-white shadow-lg shadow-indigo-200">
+                <ShieldCheck className="h-7 w-7" />
+              </div>
+              <div>
+                <CardTitle className="text-2xl font-semibold tracking-tight text-slate-900">
+                  {isRegister ? 'Crea tu cuenta en Stokly' : 'Bienvenido a Stokly'}
+                </CardTitle>
+                <CardDescription className="mt-2 text-sm leading-6 text-slate-500">
+                  {isRegister
+                    ? 'Regístrate para empezar a gestionar tu inventario y ventas.'
+                    : 'Inicia sesión para continuar con tu panel de control.'}
+                </CardDescription>
+              </div>
+            </CardHeader>
+
+            <CardContent className="px-8 pb-6 sm:px-10">
+              {showBusinessNameSetup ? (
+                <div className="rounded-2xl border border-indigo-100 bg-indigo-50/80 p-4 shadow-sm">
+                  <p className="text-sm font-semibold text-slate-900">Personaliza el nombre de tu negocio</p>
+                  <p className="mt-1 text-sm text-slate-600">
+                    Este nombre aparecerá en la interfaz para identificar tu empresa.
+                  </p>
+                  <div className="mt-4 grid gap-3">
+                    <Input
+                      type="text"
+                      placeholder="Ej. Café Aurora"
+                      value={businessNameInput}
+                      onChange={(event) => setBusinessNameInput(event.target.value)}
+                      className="h-11 rounded-xl border-slate-200 shadow-sm focus-visible:ring-indigo-500"
+                    />
+                    <div className="flex flex-col gap-2 sm:flex-row">
+                      <Button
+                        onClick={() => handleBusinessNameComplete(false)}
+                        className="h-11 flex-1 rounded-xl bg-indigo-600 font-semibold text-white shadow-lg shadow-indigo-200 transition hover:bg-indigo-700"
+                      >
+                        Guardar nombre
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => handleBusinessNameComplete(true)}
+                        className="h-11 flex-1 rounded-xl border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50"
+                      >
+                        Omitir por ahora
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid gap-4">
+                  <div className="grid gap-2">
+                  <Label htmlFor="email" className="text-sm font-medium text-slate-700">Correo electrónico</Label>
+                  <div className="relative">
+                    <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="ejemplo@correo.com"
+                      value={email}
+                      onChange={(event) => setEmail(event.target.value)}
+                      className="h-11 rounded-xl border-slate-200 pl-10 shadow-sm focus-visible:ring-indigo-500"
+                    />
+                  </div>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="password" className="text-sm font-medium text-slate-700">Contraseña</Label>
+                  <div className="relative">
+                    <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(event) => setPassword(event.target.value)}
+                      className="h-11 rounded-xl border-slate-200 pl-10 shadow-sm focus-visible:ring-indigo-500"
+                    />
+                  </div>
+                </div>
+                {isRegister ? (
+                  <div className="grid gap-2">
+                    <Label htmlFor="confirmPassword" className="text-sm font-medium text-slate-700">Confirmar contraseña</Label>
+                    <div className="relative">
+                      <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                      <Input
+                        id="confirmPassword"
+                        type="password"
+                        placeholder="Repite tu contraseña"
+                        value={confirmPassword}
+                        onChange={(event) => setConfirmPassword(event.target.value)}
+                        className="h-11 rounded-xl border-slate-200 pl-10 shadow-sm focus-visible:ring-indigo-500"
+                      />
+                    </div>
+                  </div>
+                ) : null}
+                  <Button onClick={handleEmailAuth} className="h-11 w-full rounded-xl bg-indigo-600 font-semibold text-white shadow-lg shadow-indigo-200 transition hover:bg-indigo-700" disabled={loading}>
+                    {isRegister ? 'Registrarse' : 'Iniciar sesión'}
+                  </Button>
+                </div>
+              )}
+
+              <div className="my-6 flex items-center gap-3 text-sm text-slate-400">
+                <span className="h-px flex-1 bg-slate-200"></span>
+                <span>o continúa con</span>
+                <span className="h-px flex-1 bg-slate-200"></span>
+              </div>
+
+              <div className="grid gap-3">
                 <Button
                   variant="outline"
-                  size="sm"
-                  onClick={checkEmailExists}
-                  disabled={loading || checkingEmail}
+                  className="h-11 w-full justify-center rounded-xl border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50"
+                  onClick={() => handleOAuth(false)}
+                  disabled={loading || !client}
                 >
-                  {checkingEmail ? 'Verificando...' : 'Verificar correo'}
+                  <LogIn className="mr-2 h-4 w-4" />
+                  Continuar con Google
                 </Button>
-                {emailExists !== null ? (
-                  <span className={`text-sm ${emailExists ? 'text-emerald-600' : 'text-rose-600'}`}>
-                    {emailExists ? 'Correo registrado' : 'Correo no encontrado'}
-                  </span>
-                ) : null}
               </div>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="password">Contraseña</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-              />
-            </div>
-            {isRegister ? (
-              <div className="grid gap-2">
-                <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  placeholder="Repite tu contraseña"
-                  value={confirmPassword}
-                  onChange={(event) => setConfirmPassword(event.target.value)}
-                />
+              {!client ? (
+                <p className="mt-3 text-center text-xs text-slate-400">
+                  Inicio de sesión local activado: usa email y contraseña. Google OAuth no está disponible.
+                </p>
+              ) : null}
+            </CardContent>
+
+            <CardFooter className="flex flex-col gap-3 px-8 pb-10 pt-2 sm:px-10">
+              <div className="flex items-center justify-center gap-2 text-sm text-slate-500">
+                <span>{isRegister ? '¿Ya tienes cuenta?' : '¿Aún no tienes cuenta?'}</span>
+                <button
+                  type="button"
+                  className="font-semibold text-indigo-600 transition hover:text-indigo-700"
+                  onClick={() => setIsRegister(!isRegister)}
+                >
+                  {isRegister ? 'Iniciar sesión' : 'Regístrate'}
+                </button>
               </div>
-            ) : null}
-            <Button onClick={handleEmailAuth} className="w-full" disabled={loading}>
-              {isRegister ? 'Registrarse' : 'Iniciar sesión'}
-            </Button>
-          </div>
-
-          <div className="my-6 flex items-center gap-3 text-sm text-slate-400">
-            <span className="h-px flex-1 bg-slate-200"></span>
-            <span>o continúa con</span>
-            <span className="h-px flex-1 bg-slate-200"></span>
-          </div>
-
-          <div className="grid gap-3">
-            <Button
-              variant="outline"
-              className="w-full justify-center"
-              onClick={() => handleOAuth(false)}
-              disabled={loading || !client}
-            >
-              <LogIn className="h-4 w-4" />
-              Google
-            </Button>
-            <Button
-              variant="secondary"
-              className="w-full justify-center"
-              onClick={() => handleOAuth(true)}
-              disabled={loading || !client || !email.trim()}
-            >
-              Verificar correo en Google
-            </Button>
-          </div>
-          <p className="mt-3 text-xs text-slate-400">
-            Si ingresas un correo, se usará como sugerencia en el inicio de sesión de Google.
-          </p>
-          {!client ? (
-            <p className="mt-3 text-center text-xs text-slate-400">
-              Inicio de sesión local activado: usa email y contraseña. Google OAuth no está disponible.
-            </p>
-          ) : null}
-        </CardContent>
-
-        <CardFooter className="flex flex-col gap-3 px-8 pb-10 pt-2">
-          <div className="flex items-center justify-between text-sm text-slate-500">
-            <span>{isRegister ? '¿Ya tienes cuenta?' : '¿Aún no tienes cuenta?'}</span>
-            <button
-              type="button"
-              className="font-medium text-indigo-600 transition hover:text-indigo-700"
-              onClick={() => setIsRegister(!isRegister)}
-            >
-              {isRegister ? 'Iniciar sesión' : 'Regístrate'}
-            </button>
-          </div>
-          <p className="text-xs leading-5 text-slate-400">
-            Si eliges Google, tu cuenta se creará automáticamente con el proveedor.
-          </p>
-        </CardFooter>
-      </Card>
+              <p className="text-center text-xs leading-5 text-slate-400">
+                Si eliges Google, tu cuenta se creará automáticamente con el proveedor.
+              </p>
+            </CardFooter>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 
