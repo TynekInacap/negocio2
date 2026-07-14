@@ -71,6 +71,15 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
   };
 
   const handleEmailAuth = async () => {
+    console.log('handleEmailAuth', {
+      isRegister,
+      email,
+      passwordPresent: Boolean(password),
+      confirmPasswordPresent: Boolean(confirmPassword),
+      clientPresent: Boolean(client),
+      isLocal,
+    });
+
     if (!email.trim() || !password) {
       toast.error('Ingresa correo y contraseña');
       return;
