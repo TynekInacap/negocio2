@@ -85,23 +85,26 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
       return;
     }
 
-    if (isRegister) {
-      if (!confirmPassword) {
-        toast.error('Confirma tu contraseña');
-        return;
-      }
+    console.log('register attempt', { email, password, confirmPassword, isRegister, clientPresent: Boolean(client) });
 
-      if (password !== confirmPassword) {
-        toast.error('Las contraseñas no coinciden');
-        return;
-      }
+    setLoading(true);
 
-      if (password.length < 8) {
-        toast.error('La contraseña debe tener al menos 8 caracteres');
-        return;
-      }
+    try {
+      if (!client || isLocal) {
+        const users = readLocalUsers();
+        const existingUser = users.find((user) => user.email === email.trim().toLowerCase());
 
-      console.log('register attempt', { email, password, confirmPassword, isRegister, clientPresent: Boolean(client) });
+        if (isRegister) {
+          if (existingUser) {
+            toast.error('Ya existe una cuenta con ese correo');
+            return;
+          }
+
+          const nextUsers = [...users, { email: email.trim().toLowerCase(), password }];
+          saveLocalUsers(nextUsers);
+          setShowBusinessNameSetup(true);
+          toast.success('Registro completo. Personaliza el nombre de tu negocio.');
+          return;
         } else {
           if (!existingUser || existingUser.password !== password) {
             toast.error('Correo o contraseña incorrectos');
