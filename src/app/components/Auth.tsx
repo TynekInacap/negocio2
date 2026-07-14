@@ -142,9 +142,6 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
         const { data, error } = await client.auth.signUp({
           email,
           password,
-          options: {
-            emailRedirectTo: window.location.origin,
-          },
         });
 
         console.log('signUp result', { data, error });
