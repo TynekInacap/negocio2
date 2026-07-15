@@ -201,27 +201,32 @@ export class SupabaseInventoryService implements InventoryDataService {
   }
 
   async createSale(sale: Omit<Sale, 'id'>): Promise<Sale> {
-    const createdSale: Sale = {
-      ...sale,
-      id: Date.now().toString(),
-    };
+    const { data: createdSaleData, error: salesError } = await this.client
+      .from('sales')
+      .insert(toDbSale(sale))
+      .select()
+      .single();
 
-    const { error: salesError } = await this.client.from('sales').insert(toDbSale(createdSale));
     if (salesError) throw salesError;
+    if (!createdSaleData) throw new Error('No se pudo crear la venta');
 
+    const saleId = (createdSaleData as any).id;
     const saleItems = sale.items.map((item) => ({
       product_id: item.productId,
       product_name: item.productName,
       quantity: item.quantity,
       price: item.price,
       subtotal: item.subtotal,
-      sale_id: createdSale.id,
+      sale_id: saleId,
     }));
 
     const { error: itemsError } = await this.client.from('sale_items').insert(saleItems);
     if (itemsError) throw itemsError;
 
-    return createdSale;
+    return {
+      ...sale,
+      id: String(saleId),
+    };
   }
 }
 
