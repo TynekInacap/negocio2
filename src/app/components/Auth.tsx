@@ -65,6 +65,7 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
   const [loading, setLoading] = useState(false);
   const [showBusinessNameSetup, setShowBusinessNameSetup] = useState(false);
   const [businessNameInput, setBusinessNameInput] = useState('');
+  const [formError, setFormError] = useState('');
   const [authCooldown, setAuthCooldown] = useState(false);
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
 
@@ -89,20 +90,28 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
       isLocal,
     });
 
+    setFormError('');
+
     if (!normalizedEmail || !password) {
-      toast.error('Ingresa correo y contraseña');
+      const message = 'Ingresa correo y contraseña';
+      setFormError(message);
+      toast.error(message);
       return;
     }
 
     if (isRegister && password !== confirmPassword) {
-      toast.error('Las contraseñas no coinciden');
+      const message = 'Las contraseñas no coinciden';
+      setFormError(message);
+      toast.error(message);
       return;
     }
 
     console.log('register attempt', { email: normalizedEmail, password, confirmPassword, isRegister, clientPresent: Boolean(client) });
 
     if (authCooldown) {
-      toast.error('Demasiados intentos. Espera un momento antes de volver a intentarlo.');
+      const message = 'Demasiados intentos. Espera un momento antes de volver a intentarlo.';
+      setFormError(message);
+      toast.error(message);
       return;
     }
 
@@ -116,7 +125,9 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
 
         if (isRegister) {
           if (existingUser) {
-            toast.error('Ya existe una cuenta con ese correo');
+            const message = 'Ya existe una cuenta con ese correo';
+            setFormError(message);
+            toast.error(message);
             return;
           }
 
@@ -128,7 +139,9 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
           return;
         } else {
           if (!existingUser || existingUser.password !== password) {
-            toast.error('Correo o contraseña incorrectos');
+            const message = 'Correo o contraseña incorrectos';
+            setFormError(message);
+            toast.error(message);
             return;
           }
 
@@ -150,13 +163,17 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
 
         if (error) {
           console.error('signUp error', error);
-          const errorMessage = String((error as any)?.message || '').toLowerCase();
-          if (errorMessage.includes('rate limit') || errorMessage.includes('too many requests')) {
-            toast.error('Límite de registro alcanzado. Intenta nuevamente en unos minutos.');
+          const message = String((error as any)?.message || 'Error al registrar');
+          const lowerMessage = message.toLowerCase();
+          if (lowerMessage.includes('rate limit') || lowerMessage.includes('too many requests')) {
+            const cooldownMessage = 'Límite de registro alcanzado. Intenta nuevamente en unos minutos.';
+            setFormError(cooldownMessage);
+            toast.error(cooldownMessage);
             setAuthCooldown(true);
             setCooldownSeconds(30);
           } else {
-            toast.error((error as any)?.message || 'Error al registrar');
+            setFormError(message);
+            toast.error(message);
           }
           return;
         }
@@ -174,15 +191,20 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
 
         if (error) {
           console.error('signIn error', error);
-          const errorMessage = String((error as any)?.message || '').toLowerCase();
-          if (errorMessage.includes('invalid login credentials') || errorMessage.includes('invalid login')) {
+          const message = String((error as any)?.message || 'Error al iniciar sesión');
+          const lowerMessage = message.toLowerCase();
+          if (lowerMessage.includes('invalid login credentials') || lowerMessage.includes('invalid login')) {
+            setFormError('Correo o contraseña incorrectos');
             toast.error('Correo o contraseña incorrectos');
-          } else if (errorMessage.includes('rate limit') || errorMessage.includes('too many requests')) {
-            toast.error('Demasiados intentos. Espera un momento y vuelve a intentarlo.');
+          } else if (lowerMessage.includes('rate limit') || lowerMessage.includes('too many requests')) {
+            const cooldownMessage = 'Demasiados intentos. Espera un momento y vuelve a intentarlo.';
+            setFormError(cooldownMessage);
+            toast.error(cooldownMessage);
             setAuthCooldown(true);
             setCooldownSeconds(30);
           } else {
-            toast.error((error as any)?.message || 'Error al iniciar sesión');
+            setFormError(message);
+            toast.error(message);
           }
           return;
         }
@@ -191,7 +213,9 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
           onSuccess(data.user.email ?? normalizedEmail, readBusinessName(data.user.email ?? normalizedEmail) ?? undefined);
           toast.success('Inicio de sesión exitoso.');
         } else {
-          toast.error('No se pudo iniciar sesión.');
+          const message = 'No se pudo iniciar sesión.';
+          setFormError(message);
+          toast.error(message);
         }
       }
     } catch (error) {
@@ -201,7 +225,9 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
         setAuthCooldown(true);
         setCooldownSeconds(30);
       } else {
-        toast.error((error as any)?.message || 'Error en autenticación');
+        const message = String((error as any)?.message || 'Error en autenticación');
+        setFormError(message);
+        toast.error(message);
       }
     } finally {
       setLoading(false);
@@ -377,6 +403,9 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
                   <Button onClick={handleEmailAuth} className="h-11 w-full rounded-xl bg-indigo-600 font-semibold text-white shadow-lg shadow-indigo-200 transition hover:bg-indigo-700" disabled={loading}>
                     {isRegister ? 'Registrarse' : 'Iniciar sesión'}
                   </Button>
+                  {formError ? (
+                    <p className="mt-2 text-sm text-red-600">{formError}</p>
+                  ) : null}
                 </div>
               )}
 

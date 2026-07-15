@@ -6,6 +6,8 @@ import { Auth } from './components/Auth';
 import { LayoutDashboard, Package, ShoppingCart, Store } from 'lucide-react';
 import { Toaster } from './components/ui/sonner';
 import { Button } from './components/ui/button';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from './components/ui/alert-dialog';
+import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from './components/ui/sheet';
 import { toast } from 'sonner';
 import { cn } from './components/ui/utils';
 import { createInventoryService, LocalInventoryService } from './services/inventoryService';
@@ -29,6 +31,7 @@ export default function App() {
   const LOCAL_SESSION_KEY = 'stokly-local-session';
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [editingBusinessName, setEditingBusinessName] = useState('');
+  const [signOutDialogOpen, setSignOutDialogOpen] = useState(false);
 
   function readLocalSession(): string | null {
     if (typeof window === 'undefined') return null;
@@ -297,16 +300,33 @@ export default function App() {
                   variant="secondary"
                   onClick={handleOpenSettings}
                 >
-                  Configuración del negocio
-                </Button>
-                <Button
-                  className="w-full bg-white/15 text-white hover:bg-white/25"
-                  variant="secondary"
-                  onClick={handleSignOut}
-                >
-                  Cerrar sesión
+                  Configuración
                 </Button>
               </div>
+            </div>
+            <div className="mt-auto border-t border-gray-200 p-4">
+              <AlertDialog open={signOutDialogOpen} onOpenChange={setSignOutDialogOpen}>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    className="w-full bg-red-500 text-white hover:bg-red-600"
+                    variant="destructive"
+                  >
+                    Cerrar sesión
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>¿Cerrar sesión?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Si cierras sesión, deberás volver a ingresar con tu cuenta para acceder.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleSignOut}>Cerrar sesión</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
 
             {/* Navigation */}
@@ -350,31 +370,33 @@ export default function App() {
                   {loadError}
                 </div>
               ) : null}
-              {settingsOpen ? (
-                <div className="mb-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                  <div className="flex flex-col gap-4">
-                    <div>
-                      <h2 className="text-xl font-semibold text-slate-900">Configuración del negocio</h2>
-                      <p className="text-sm text-slate-500">Edita el nombre de tu negocio y guarda los cambios.</p>
+              <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
+                <SheetContent side="right" className="max-w-sm">
+                  <SheetHeader>
+                    <SheetTitle>Configuración</SheetTitle>
+                  </SheetHeader>
+                  <div className="p-4">
+                    <div className="mb-4">
+                      <label className="mb-2 block text-sm font-medium text-slate-700">Nombre del negocio</label>
+                      <input
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                        type="text"
+                        value={editingBusinessName}
+                        onChange={(event) => setEditingBusinessName(event.target.value)}
+                        placeholder="Nombre de tu negocio"
+                      />
                     </div>
-                    <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
-                      <div>
-                        <label className="mb-2 block text-sm font-medium text-slate-700">Nombre del negocio</label>
-                        <input
-                          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-                          type="text"
-                          value={editingBusinessName}
-                          onChange={(event) => setEditingBusinessName(event.target.value)}
-                          placeholder="Nombre de tu negocio"
-                        />
-                      </div>
-                      <div className="flex items-end gap-2">
-                        <Button onClick={handleSaveBusinessName}>Guardar nombre</Button>
-                      </div>
-                    </div>
+                    <Button className="w-full" onClick={handleSaveBusinessName}>
+                      Guardar nombre
+                    </Button>
                   </div>
-                </div>
-              ) : null}
+                  <SheetFooter>
+                    <Button variant="secondary" onClick={() => setSettingsOpen(false)}>
+                      Cerrar
+                    </Button>
+                  </SheetFooter>
+                </SheetContent>
+              </Sheet>
               {activeView === 'dashboard' && (
                 <Dashboard products={products} sales={sales} />
               )}
