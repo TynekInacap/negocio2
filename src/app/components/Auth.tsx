@@ -19,6 +19,7 @@ interface LocalUser {
 }
 
 const LOCAL_USERS_KEY = 'pixel-ink-local-users';
+const LOCAL_SESSION_KEY = 'stokly-local-session';
 
 function readLocalUsers(): LocalUser[] {
   if (typeof window === 'undefined') return [];
@@ -34,6 +35,11 @@ function readLocalUsers(): LocalUser[] {
 function saveLocalUsers(users: LocalUser[]) {
   if (typeof window === 'undefined') return;
   window.localStorage.setItem(LOCAL_USERS_KEY, JSON.stringify(users));
+}
+
+function persistLocalSession(email: string) {
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem(LOCAL_SESSION_KEY, email.trim().toLowerCase());
 }
 
 function readBusinessName(email?: string): string | null {
@@ -102,6 +108,7 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
 
           const nextUsers = [...users, { email: email.trim().toLowerCase(), password }];
           saveLocalUsers(nextUsers);
+          persistLocalSession(email);
           setShowBusinessNameSetup(true);
           toast.success('Registro completo. Personaliza el nombre de tu negocio.');
           return;
@@ -111,6 +118,7 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
             return;
           }
 
+          persistLocalSession(existingUser.email);
           onSuccess(existingUser.email, readBusinessName(existingUser.email) ?? undefined);
           toast.success('Inicio de sesión exitoso.');
         }

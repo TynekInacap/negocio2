@@ -5,6 +5,7 @@ import { SalesRegister } from './components/SalesRegister';
 import { Auth } from './components/Auth';
 import { LayoutDashboard, Package, ShoppingCart, Store } from 'lucide-react';
 import { Toaster } from './components/ui/sonner';
+import { Button } from './components/ui/button';
 import { toast } from 'sonner';
 import { cn } from './components/ui/utils';
 import { createInventoryService, LocalInventoryService } from './services/inventoryService';
@@ -22,7 +23,64 @@ export default function App() {
   const [activeView, setActiveView] = useState<ViewType>('dashboard');
   const [user, setUser] = useState<string | null>(null);
   const [businessName, setBusinessName] = useState<string | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+
+  const LOCAL_SESSION_KEY = 'stokly-local-session';
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [editingBusinessName, setEditingBusinessName] = useState('');
+
+  function readLocalSession(): string | null {
+    if (typeof window === 'undefined') return null;
+    return window.localStorage.getItem(LOCAL_SESSION_KEY);
+  }
+
+  function readBusinessName(email?: string): string | null {
+    if (typeof window === 'undefined') return null;
+    const normalizedEmail = email?.trim().toLowerCase();
+    if (!normalizedEmail) return null;
+    return window.localStorage.getItem(`stokly-business-name:${normalizedEmail}`) ?? null;
+  }
+
+  function saveBusinessName(email: string, businessName: string) {
+    if (typeof window === 'undefined') return;
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail) return;
+    window.localStorage.setItem(`stokly-business-name:${normalizedEmail}`, businessName.trim());
+  }
+
+  const handleOpenSettings = () => {
+    setEditingBusinessName(businessName ?? '');
+    setSettingsOpen(true);
+  };
+
+  const handleSaveBusinessName = () => {
+    if (!user) return;
+    const updatedName = editingBusinessName.trim() || 'Mi negocio';
+    saveBusinessName(user, updatedName);
+    setBusinessName(updatedName);
+    setSettingsOpen(false);
+    toast.success('Nombre del negocio actualizado');
+  };
+
+  const handleSignOut = async () => {
+    try {
+      if (supabaseClient && isSupabaseConfigured) {
+        await supabaseClient.auth.signOut();
+      }
+    } catch (error) {
+      console.error('signOut failed:', error);
+    }
+
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem(LOCAL_SESSION_KEY);
+    }
+
+    setUser(null);
+    setBusinessName(null);
+    setSettingsOpen(false);
+    toast('Sesión cerrada');
+  };
 
   useEffect(() => {
     console.log('Supabase config present:', hasSupabaseConfig());
@@ -44,6 +102,33 @@ export default function App() {
     };
 
     void loadState();
+  }, []);
+
+  useEffect(() => {
+    const restoreAuth = async () => {
+      try {
+        if (supabaseClient && isSupabaseConfigured) {
+          const { data, error } = await supabaseClient.auth.getSession();
+          if (!error && data.session?.user?.email) {
+            const email = data.session.user.email;
+            setUser(email);
+            setBusinessName(readBusinessName(email) ?? null);
+          }
+        } else {
+          const email = readLocalSession();
+          if (email) {
+            setUser(email);
+            setBusinessName(readBusinessName(email) ?? null);
+          }
+        }
+      } catch (error) {
+        console.error('restoreAuth failed', error);
+      } finally {
+        setAuthLoading(false);
+      }
+    };
+
+    void restoreAuth();
   }, []);
 
   const handleSignInSuccess = (userEmail: string, nextBusinessName?: string) => {
@@ -175,6 +260,14 @@ export default function App() {
     },
   ];
 
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-700">
+        Cargando sesión...
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50">
       {!user ? (
@@ -197,6 +290,22 @@ export default function App() {
                   <h1 className="text-white">{businessName || 'Stokly'}</h1>
                   <p className="text-xs text-indigo-100">Sistema de Gestión</p>
                 </div>
+              </div>
+              <div className="mt-4 flex flex-col gap-2">
+                <Button
+                  className="w-full bg-white/15 text-white hover:bg-white/25"
+                  variant="secondary"
+                  onClick={handleOpenSettings}
+                >
+                  Configuración del negocio
+                </Button>
+                <Button
+                  className="w-full bg-white/15 text-white hover:bg-white/25"
+                  variant="secondary"
+                  onClick={handleSignOut}
+                >
+                  Cerrar sesión
+                </Button>
               </div>
             </div>
 
@@ -239,6 +348,31 @@ export default function App() {
               {loadError ? (
                 <div className="rounded-lg border border-red-200 bg-red-50 p-4 mb-6 text-sm text-red-700">
                   {loadError}
+                </div>
+              ) : null}
+              {settingsOpen ? (
+                <div className="mb-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                  <div className="flex flex-col gap-4">
+                    <div>
+                      <h2 className="text-xl font-semibold text-slate-900">Configuración del negocio</h2>
+                      <p className="text-sm text-slate-500">Edita el nombre de tu negocio y guarda los cambios.</p>
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+                      <div>
+                        <label className="mb-2 block text-sm font-medium text-slate-700">Nombre del negocio</label>
+                        <input
+                          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                          type="text"
+                          value={editingBusinessName}
+                          onChange={(event) => setEditingBusinessName(event.target.value)}
+                          placeholder="Nombre de tu negocio"
+                        />
+                      </div>
+                      <div className="flex items-end gap-2">
+                        <Button onClick={handleSaveBusinessName}>Guardar nombre</Button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               ) : null}
               {activeView === 'dashboard' && (
