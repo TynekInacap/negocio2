@@ -34,10 +34,8 @@ function normalizeSales(sales: Sale[]): Sale[] {
 }
 
 function toDbProduct(product: Omit<Product, 'id'> & { id?: string }) {
-  const { minStock, ...rest } = product as Omit<Product, 'id'> & { id?: string };
   return {
-    ...rest,
-    min_stock: minStock,
+    ...product,
   } as const;
 }
 
