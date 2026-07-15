@@ -34,9 +34,16 @@ function normalizeSales(sales: Sale[]): Sale[] {
 }
 
 function toDbProduct(product: Omit<Product, 'id'> & { id?: string }) {
-  return {
-    ...product,
-  } as const;
+  const { id, minStock, ...rest } = product;
+  return rest as const;
+}
+
+async function getCurrentUserId(client: ReturnType<typeof createSupabaseClient>) {
+  const { data, error } = await client.auth.getSession();
+  if (error) throw error;
+  const userId = data.session?.user?.id;
+  if (!userId) throw new Error('No authenticated user available');
+  return userId;
 }
 
 function toDbSale(sale: Omit<Sale, 'id'> & { id: string }) {
@@ -125,7 +132,7 @@ export class SupabaseInventoryService implements InventoryDataService {
 
     const normalizedProducts = (products ?? []).map((product) => ({
       ...product,
-      minStock: (product as any).min_stock ?? product.minStock,
+      minStock: (product as any).min_stock ?? (product as any).minStock ?? 0,
     })) as Product[];
 
     const normalizedSales = (salesWithItems ?? []).map((sale: any) => ({
@@ -150,15 +157,30 @@ export class SupabaseInventoryService implements InventoryDataService {
   }
 
   async createProduct(product: Omit<Product, 'id'>): Promise<Product> {
-    const createdProduct: Product = {
-      ...product,
-      id: Date.now().toString(),
+    const currentUserId = await getCurrentUserId(this.client);
+    const dbProduct = {
+      name: product.name,
+      description: product.description,
+      price: product.price,
+      stock: product.stock,
+      category: product.category,
+      sku: product.sku,
+      user_id: currentUserId,
     };
 
-    const { error } = await this.client.from('products').insert(toDbProduct(createdProduct));
+    const { data, error } = await this.client.from('products').insert(dbProduct).select().single();
     if (error) throw error;
 
-    return createdProduct;
+    return {
+      id: (data as any).id,
+      name: data.name,
+      description: data.description,
+      price: Number(data.price),
+      stock: data.stock,
+      category: data.category,
+      sku: data.sku,
+      minStock: product.minStock || 0,
+    };
   }
 
   async updateProduct(id: string, product: Omit<Product, 'id'>): Promise<Product> {
