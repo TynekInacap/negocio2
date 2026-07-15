@@ -376,9 +376,9 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top_left,_rgba(129,140,248,0.2),_transparent_35%),radial-gradient(circle_at_bottom_right,_rgba(56,189,248,0.16),_transparent_30%),linear-gradient(180deg,_#f8fafc_0%,_#eef2ff_50%,_#f8fafc_100%)] p-6">
       <div className="w-full max-w-6xl overflow-hidden rounded-[2.5rem] border border-slate-200/70 bg-white/95 shadow-[0_40px_120px_-60px_rgba(15,23,42,0.35)] backdrop-blur-sm">
-        <div className="grid lg:grid-cols-[1.7fr_0.95fr] gap-6">
-          <div className="hidden lg:flex flex-col justify-between rounded-[2rem] border border-white/10 bg-gradient-to-br from-indigo-600 via-violet-600 to-sky-500 p-10 text-white shadow-[0_25px_80px_-20px_rgba(15,23,42,0.35)] overflow-hidden">
-            <div className="space-y-8">
+        <div className="grid gap-6 lg:grid-cols-[1.7fr_0.95fr]">
+          <div className="flex flex-col justify-between rounded-[2rem] border border-white/10 bg-gradient-to-br from-indigo-600 via-violet-600 to-sky-500 p-6 text-white shadow-[0_25px_80px_-20px_rgba(15,23,42,0.35)] overflow-hidden sm:p-8">
+            <div className="space-y-7 sm:space-y-8">
               <div className="mb-6 inline-flex items-center justify-center rounded-3xl border border-white/15 bg-white/10 px-4 py-3 text-xs font-semibold uppercase tracking-[0.32em] text-white/90 shadow-lg shadow-black/10">
                 Stokly, la herramienta que necesitas
               </div>

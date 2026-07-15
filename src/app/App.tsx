@@ -364,6 +364,31 @@ export default function App() {
                 >
                   Configuración
                 </Button>
+                <div className="lg:hidden">
+                  <AlertDialog open={signOutDialogOpen} onOpenChange={setSignOutDialogOpen}>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        className="w-full inline-flex items-center justify-center rounded-lg bg-red-500 px-4 py-3 text-sm font-semibold text-white shadow-sm transition duration-300 hover:-translate-y-0.5 hover:bg-red-600"
+                        variant="destructive"
+                      >
+                        <LogOut className="mr-2 h-4 w-4" />
+                        Cerrar sesión
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>¿Cerrar sesión?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Si cierras sesión, deberás volver a ingresar con tu cuenta para acceder.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleSignOut}>Cerrar sesión</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
               </div>
             </div>
 
@@ -496,6 +521,9 @@ export default function App() {
                   <SheetFooter className="flex flex-col gap-3 p-6">
                     <Button className="w-full bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-lg shadow-indigo-200/40 hover:shadow-indigo-300/50" onClick={handleSaveSettings}>
                       Guardar configuración
+                    </Button>
+                    <Button className="w-full bg-red-500 text-white hover:bg-red-600" onClick={handleSignOut}>
+                      Cerrar sesión
                     </Button>
                     <Button variant="outline" className="w-full" onClick={() => setSettingsOpen(false)}>
                       Cerrar
