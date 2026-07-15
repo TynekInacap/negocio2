@@ -6,6 +6,7 @@ import { Auth } from './components/Auth';
 import { LayoutDashboard, LogOut, Package, ShoppingCart, Store } from 'lucide-react';
 import { Toaster } from './components/ui/sonner';
 import { Button } from './components/ui/button';
+import { Switch } from './components/ui/switch';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from './components/ui/alert-dialog';
 import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from './components/ui/sheet';
 import { toast } from 'sonner';
@@ -29,8 +30,12 @@ export default function App() {
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const LOCAL_SESSION_KEY = 'stokly-local-session';
+  const LOCAL_SETTINGS_KEY = 'stokly-settings';
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [editingBusinessName, setEditingBusinessName] = useState('');
+  const [currency, setCurrency] = useState('USD');
+  const [notificationEmail, setNotificationEmail] = useState('');
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [signOutDialogOpen, setSignOutDialogOpen] = useState(false);
 
   function readLocalSession(): string | null {
@@ -52,18 +57,53 @@ export default function App() {
     window.localStorage.setItem(`stokly-business-name:${normalizedEmail}`, businessName.trim());
   }
 
+  function readSettings() {
+    if (typeof window === 'undefined') return {
+      currency: 'USD',
+      notificationEmail: '',
+      notificationsEnabled: true,
+    };
+
+    const stored = window.localStorage.getItem(LOCAL_SETTINGS_KEY);
+    if (!stored) return {
+      currency: 'USD',
+      notificationEmail: '',
+      notificationsEnabled: true,
+    };
+
+    try {
+      return JSON.parse(stored) as { currency: string; notificationEmail: string; notificationsEnabled: boolean };
+    } catch {
+      return {
+        currency: 'USD',
+        notificationEmail: '',
+        notificationsEnabled: true,
+      };
+    }
+  }
+
+  function saveSettings(settings: { currency: string; notificationEmail: string; notificationsEnabled: boolean }) {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(LOCAL_SETTINGS_KEY, JSON.stringify(settings));
+  }
+
   const handleOpenSettings = () => {
     setEditingBusinessName(businessName ?? '');
+    const settings = readSettings();
+    setCurrency(settings.currency);
+    setNotificationEmail(settings.notificationEmail);
+    setNotificationsEnabled(settings.notificationsEnabled);
     setSettingsOpen(true);
   };
 
-  const handleSaveBusinessName = () => {
+  const handleSaveSettings = () => {
     if (!user) return;
     const updatedName = editingBusinessName.trim() || 'Mi negocio';
     saveBusinessName(user, updatedName);
+    saveSettings({ currency, notificationEmail, notificationsEnabled });
     setBusinessName(updatedName);
     setSettingsOpen(false);
-    toast.success('Nombre del negocio actualizado');
+    toast.success('Configuración guardada');
   };
 
   const handleSignOut = async () => {
@@ -376,27 +416,70 @@ export default function App() {
                 </div>
               ) : null}
               <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
-                <SheetContent side="right" className="max-w-sm animate-soft-pop">
-                  <SheetHeader>
-                    <SheetTitle>Configuración</SheetTitle>
+                <SheetContent side="right" className="max-w-lg animate-soft-pop rounded-[2rem] border border-slate-200/80 bg-white shadow-2xl shadow-slate-900/5">
+                  <SheetHeader className="border-b border-slate-200/80 px-6 py-5">
+                    <SheetTitle className="text-2xl font-semibold text-slate-900">Configuración</SheetTitle>
+                    <p className="mt-2 text-sm text-slate-500">Ajusta tu tienda y recibe alertas personalizadas.</p>
                   </SheetHeader>
-                  <div className="p-4">
-                    <div className="mb-4">
-                      <label className="mb-2 block text-sm font-medium text-slate-700">Nombre del negocio</label>
-                      <input
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-                        type="text"
-                        value={editingBusinessName}
-                        onChange={(event) => setEditingBusinessName(event.target.value)}
-                        placeholder="Nombre de tu negocio"
-                      />
+                  <div className="p-6 space-y-6">
+                    <div className="grid gap-4">
+                      <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg">
+                        <p className="text-sm font-semibold text-slate-900">Nombre del negocio</p>
+                        <p className="text-sm text-slate-500 mt-1">Este nombre aparecerá en el encabezado de la aplicación.</p>
+                        <div className="mt-4">
+                          <input
+                            className="w-full rounded-[1rem] border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                            type="text"
+                            value={editingBusinessName}
+                            onChange={(event) => setEditingBusinessName(event.target.value)}
+                            placeholder="Nombre de tu negocio"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg">
+                        <p className="text-sm font-semibold text-slate-900">Moneda de operación</p>
+                        <p className="text-sm text-slate-500 mt-1">Selecciona la moneda que usarás para tus precios.</p>
+                        <div className="mt-4">
+                          <select
+                            className="w-full rounded-[1rem] border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                            value={currency}
+                            onChange={(event) => setCurrency(event.target.value)}
+                          >
+                            <option value="USD">USD - Dólar</option>
+                            <option value="EUR">EUR - Euro</option>
+                            <option value="PEN">PEN - Sol</option>
+                            <option value="CLP">CLP - Peso chileno</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg">
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <p className="text-sm font-semibold text-slate-900">Notificaciones inteligentes</p>
+                            <p className="text-sm text-slate-500 mt-1">Recibe alertas cuando los productos lleguen al nivel mínimo de stock.</p>
+                          </div>
+                          <Switch checked={notificationsEnabled} onCheckedChange={(checked) => setNotificationsEnabled(Boolean(checked))} />
+                        </div>
+                        <div className="mt-4">
+                          <label className="mb-2 block text-sm font-medium text-slate-700">Correo de notificación</label>
+                          <input
+                            className="w-full rounded-[1rem] border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                            type="email"
+                            value={notificationEmail}
+                            onChange={(event) => setNotificationEmail(event.target.value)}
+                            placeholder="ejemplo@correo.com"
+                          />
+                        </div>
+                      </div>
                     </div>
-                    <Button className="w-full" onClick={handleSaveBusinessName}>
-                      Guardar nombre
-                    </Button>
                   </div>
-                  <SheetFooter>
-                    <Button variant="secondary" onClick={() => setSettingsOpen(false)}>
+                  <SheetFooter className="flex flex-col gap-3 p-6">
+                    <Button className="w-full bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-lg shadow-indigo-200/40 hover:shadow-indigo-300/50" onClick={handleSaveSettings}>
+                      Guardar configuración
+                    </Button>
+                    <Button variant="outline" className="w-full" onClick={() => setSettingsOpen(false)}>
                       Cerrar
                     </Button>
                   </SheetFooter>
