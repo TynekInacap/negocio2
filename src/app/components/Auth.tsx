@@ -3,6 +3,7 @@ import { LogIn, ShieldCheck, Sparkles, Lock, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { Button } from './ui/button';
+import { cn } from './ui/utils';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from './ui/card';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -68,6 +69,54 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
   const [formError, setFormError] = useState('');
   const [authCooldown, setAuthCooldown] = useState(false);
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
+  const [visualState, setVisualState] = useState<'idle' | 'success' | 'error'>('idle');
+
+  const playSound = (type: 'success' | 'error' | 'click') => {
+    if (typeof window === 'undefined') return;
+    const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContext) return;
+
+    const context = new AudioContext();
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+
+    oscillator.connect(gain);
+    gain.connect(context.destination);
+
+    oscillator.type = type === 'success' ? 'triangle' : type === 'error' ? 'sawtooth' : 'sine';
+    const frequency = type === 'success' ? 660 : type === 'error' ? 220 : 440;
+    oscillator.frequency.setValueAtTime(frequency, context.currentTime);
+    gain.gain.setValueAtTime(0.0001, context.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.2, context.currentTime + 0.01);
+
+    oscillator.start(context.currentTime);
+    oscillator.stop(context.currentTime + 0.18);
+    gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.18);
+
+    window.setTimeout(() => {
+      context.close();
+    }, 300);
+  };
+
+  const animateFeedback = (state: 'success' | 'error') => {
+    setVisualState(state);
+    window.setTimeout(() => setVisualState('idle'), 800);
+  };
+
+  const cardClassName = cn(
+    'border-0 bg-transparent shadow-none transform transition duration-500 ease-out',
+    visualState === 'success'
+      ? 'animate-success-glow border-lime-300/70 shadow-lime-200/30 ring-2 ring-lime-200/70'
+      : visualState === 'error'
+      ? 'animate-shake border-red-300/80 shadow-red-200/30 ring-1 ring-red-300/40'
+      : 'shadow-none',
+  );
+
+  const handleModeToggle = () => {
+    playSound('click');
+    setIsRegister((current) => !current);
+    setFormError('');
+  };
 
   const handleBusinessNameComplete = (skip = false) => {
     const normalizedEmail = email.trim().toLowerCase();
@@ -96,6 +145,8 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
       const message = 'Ingresa correo y contraseña';
       setFormError(message);
       toast.error(message);
+      playSound('error');
+      animateFeedback('error');
       return;
     }
 
@@ -103,6 +154,8 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
       const message = 'Las contraseñas no coinciden';
       setFormError(message);
       toast.error(message);
+      playSound('error');
+      animateFeedback('error');
       return;
     }
 
@@ -128,6 +181,8 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
             const message = 'Ya existe una cuenta con ese correo';
             setFormError(message);
             toast.error(message);
+            playSound('error');
+            animateFeedback('error');
             return;
           }
 
@@ -142,6 +197,8 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
             const message = 'Correo o contraseña incorrectos';
             setFormError(message);
             toast.error(message);
+            playSound('error');
+            animateFeedback('error');
             return;
           }
 
@@ -180,6 +237,8 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
 
         setShowBusinessNameSetup(true);
         toast.success('Registro realizado. Personaliza el nombre de tu negocio.');
+        playSound('success');
+        animateFeedback('success');
         return;
       } else {
         const { data, error } = await client.auth.signInWithPassword({
@@ -194,28 +253,41 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
           const message = String((error as any)?.message || 'Error al iniciar sesión');
           const lowerMessage = message.toLowerCase();
           if (lowerMessage.includes('invalid login credentials') || lowerMessage.includes('invalid login')) {
-            setFormError('Correo o contraseña incorrectos');
-            toast.error('Correo o contraseña incorrectos');
+            const errorMessage = 'Correo o contraseña incorrectos';
+            setFormError(errorMessage);
+            toast.error(errorMessage);
+            playSound('error');
+            animateFeedback('error');
           } else if (lowerMessage.includes('rate limit') || lowerMessage.includes('too many requests')) {
             const cooldownMessage = 'Demasiados intentos. Espera un momento y vuelve a intentarlo.';
             setFormError(cooldownMessage);
             toast.error(cooldownMessage);
             setAuthCooldown(true);
             setCooldownSeconds(30);
+            playSound('error');
+            animateFeedback('error');
           } else {
             setFormError(message);
             toast.error(message);
+            playSound('error');
+            animateFeedback('error');
           }
           return;
         }
 
         if (data?.user) {
           onSuccess(data.user.email ?? normalizedEmail, readBusinessName(data.user.email ?? normalizedEmail) ?? undefined);
-          toast.success('Inicio de sesión exitoso.');
+          const message = 'Inicio de sesión exitoso.';
+          setFormError('');
+          toast.success(message);
+          playSound('success');
+          animateFeedback('success');
         } else {
           const message = 'No se pudo iniciar sesión.';
           setFormError(message);
           toast.error(message);
+          playSound('error');
+          animateFeedback('error');
         }
       }
     } catch (error) {
@@ -228,6 +300,8 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
         const message = String((error as any)?.message || 'Error en autenticación');
         setFormError(message);
         toast.error(message);
+        playSound('error');
+        animateFeedback('error');
       }
     } finally {
       setLoading(false);
@@ -289,23 +363,49 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
     <div className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top_left,_rgba(129,140,248,0.18),_transparent_35%),linear-gradient(135deg,_#f8fafc_0%,_#eef2ff_45%,_#f8fafc_100%)] p-4">
       <div className="w-full max-w-5xl overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white/90 shadow-[0_25px_80px_-20px_rgba(15,23,42,0.35)] backdrop-blur">
         <div className="grid lg:grid-cols-[1.05fr_0.95fr]">
-          <div className="hidden lg:flex flex-col justify-between bg-gradient-to-br from-indigo-600 via-violet-600 to-sky-500 p-10 text-white">
+          <div className="hidden lg:flex flex-col justify-between bg-gradient-to-br from-indigo-600 via-violet-600 to-sky-500 p-10 text-white overflow-hidden">
             <div>
-              <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15 backdrop-blur">
-                <Sparkles className="h-6 w-6" />
+              <div className="mb-6 inline-flex items-center justify-center rounded-3xl border border-white/15 bg-white/10 px-4 py-3 text-xs font-semibold uppercase tracking-[0.32em] text-white/90 shadow-lg shadow-black/10">
+                STOKLY PRO
               </div>
-              <h2 className="text-3xl font-semibold tracking-tight">Gestiona tu negocio con estilo</h2>
-              <p className="mt-3 max-w-md text-sm leading-6 text-indigo-50/90">
-                Centraliza productos, ventas y operaciones en una sola plataforma elegante y sencilla.
+              <h2 className="text-3xl font-semibold tracking-tight leading-tight">
+                <span className="block animate-gradient-text">Gestión inteligente</span>
+                <span className="block mt-2 text-white/80">para negocios que quieren crecer.</span>
+              </h2>
+              <p className="mt-4 max-w-md text-sm leading-6 text-indigo-50/85 animate-fade-up">
+                Potencia tu inventario, ventas y análisis con un panel limpio y confiable.
               </p>
+
+              <div className="mt-8 grid gap-3 text-sm text-indigo-50/80">
+                <div className="flex items-start gap-3">
+                  <span className="mt-1 inline-flex h-2.5 w-2.5 rounded-full bg-sky-300/90"></span>
+                  <span className="animate-fade-up text-sm leading-6">Reportes claros y decisiones rápidas.</span>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="mt-1 inline-flex h-2.5 w-2.5 rounded-full bg-emerald-300/90"></span>
+                  <span className="animate-fade-up text-sm leading-6">Flujo de trabajo ágil pensado para tu operación.</span>
+                </div>
+              </div>
             </div>
-            <div className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur">
-              <p className="text-sm font-medium">Acceso seguro</p>
-              <p className="mt-1 text-sm text-indigo-50/85">Tu información protegida con una experiencia moderna y fluida.</p>
+            <div className="rounded-[2rem] border border-white/15 bg-white/10 p-5 shadow-lg shadow-black/10 backdrop-blur-xl">
+              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-100/80">Para pymes en crecimiento</p>
+              <p className="mt-3 text-sm leading-6 text-indigo-50/85 animate-fade-up">
+                Una solución pensada para pequeñas y medianas empresas que necesitan orden, control y velocidad en su día a día.
+              </p>
+              <div className="mt-4 grid gap-3 text-sm text-slate-100/80">
+                <div className="rounded-2xl bg-white/10 p-3 backdrop-blur">
+                  <p className="font-medium text-white">Implementación rápida</p>
+                  <p className="mt-1 text-xs text-indigo-100/80">Empieza a trabajar en minutos sin complicaciones.</p>
+                </div>
+                <div className="rounded-2xl bg-white/10 p-3 backdrop-blur">
+                  <p className="font-medium text-white">Soporte a tu ritmo</p>
+                  <p className="mt-1 text-xs text-indigo-100/80">Funciones útiles para comercios, servicios y distribución.</p>
+                </div>
+              </div>
             </div>
           </div>
 
-          <Card className="border-0 bg-transparent shadow-none">
+          <Card className={cardClassName}>
             <CardHeader className="gap-3 px-8 pt-10 pb-4 text-center sm:px-10">
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl bg-indigo-600 text-white shadow-lg shadow-indigo-200">
                 <ShieldCheck className="h-7 w-7" />
@@ -352,6 +452,9 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
                         Omitir por ahora
                       </Button>
                     </div>
+                    {formError ? (
+                      <p className="mt-3 text-sm text-red-600">{formError}</p>
+                    ) : null}
                   </div>
                 </div>
               ) : (
@@ -439,7 +542,7 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
                 <button
                   type="button"
                   className="font-semibold text-indigo-600 transition hover:text-indigo-700"
-                  onClick={() => setIsRegister(!isRegister)}
+                  onClick={handleModeToggle}
                 >
                   {isRegister ? 'Iniciar sesión' : 'Regístrate'}
                 </button>
