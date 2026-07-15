@@ -423,7 +423,7 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
               </div>
 
               <div className="grid gap-4 sm:grid-cols-3">
-                <div className="rounded-3xl border border-white/15 bg-white/10 p-5 backdrop-blur transition hover:-translate-y-1 hover:bg-white/20">
+                <div className="rounded-3xl border border-white/15 bg-white/10 p-5 backdrop-blur transition hover:-translate-y-1 hover:bg-white/20 sm:p-5">
                   <p className="text-xs uppercase tracking-[0.24em] text-slate-200/80">Ventas</p>
                   <p className="mt-3 text-lg font-semibold text-white">+38%</p>
                   <p className="mt-2 text-sm text-indigo-100/85">Aumento en el control de ventas.</p>
@@ -442,11 +442,11 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
             </div>
           </div>
 
-          <div className="space-y-6 px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
-            <Card className={cn(cardClassName, 'animate-fade-up bg-white shadow-[0_18px_60px_-30px_rgba(15,23,42,0.15)] ring-1 ring-slate-200/80')}>
-            <CardHeader className="gap-3 px-8 pt-12 pb-5 text-center sm:px-10 animate-fade-up">
+          <div className="space-y-6 px-4 py-5 sm:px-6 sm:py-7 lg:px-8 lg:py-10">
+            <Card className={cn(cardClassName, 'mx-auto w-full max-w-2xl animate-fade-up bg-white shadow-[0_18px_60px_-30px_rgba(15,23,42,0.15)] ring-1 ring-slate-200/80')}>
+            <CardHeader className="gap-3 px-6 pt-10 pb-5 text-center sm:px-8 sm:pt-12 sm:pb-6 animate-fade-up">
               <div>
-                <CardTitle className="text-2xl font-semibold tracking-tight text-slate-900 transition duration-700 ease-out motion-reduce:transition-none motion-reduce:transform-none animate-slide-up">
+                <CardTitle className="text-2xl sm:text-3xl font-semibold tracking-tight text-slate-900 transition duration-700 ease-out motion-reduce:transition-none motion-reduce:transform-none animate-slide-up">
                   {isRegister ? (
                     <span className="inline-block bg-gradient-to-r from-sky-600 to-indigo-500 bg-clip-text text-transparent animate-gradient-soft">
                       Crea tu cuenta en Stokly
@@ -546,7 +546,7 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
                       </div>
                     </div>
                   ) : null}
-                  <Button onClick={handleEmailAuth} className="h-12 w-full rounded-[1.25rem] bg-gradient-to-r from-sky-600 to-indigo-600 font-semibold text-white shadow-lg shadow-sky-200 transition duration-300 ease-out hover:-translate-y-0.5 hover:from-sky-700 hover:to-indigo-700 active:scale-[0.98]" disabled={loading}>
+                  <Button onClick={handleEmailAuth} className="h-12 w-full rounded-[1.25rem] bg-gradient-to-r from-sky-600 to-indigo-600 font-semibold text-white shadow-lg shadow-sky-200 transition duration-300 ease-out hover:-translate-y-0.5 hover:from-sky-700 hover:to-indigo-700 active:scale-[0.98] sm:text-base" disabled={loading}>
                     {isRegister ? 'Registrarse' : 'Iniciar sesión'}
                   </Button>
                   {formError ? (
