@@ -361,51 +361,98 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top_left,_rgba(129,140,248,0.18),_transparent_35%),linear-gradient(135deg,_#f8fafc_0%,_#eef2ff_45%,_#f8fafc_100%)] p-4">
-      <div className="w-full max-w-5xl overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white/90 shadow-[0_25px_80px_-20px_rgba(15,23,42,0.35)] backdrop-blur">
-        <div className="grid lg:grid-cols-[1.05fr_0.95fr]">
-          <div className="hidden lg:flex flex-col justify-between bg-gradient-to-br from-indigo-600 via-violet-600 to-sky-500 p-10 text-white overflow-hidden">
-            <div>
+      <div className="w-full max-w-6xl overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white/90 shadow-[0_25px_80px_-20px_rgba(15,23,42,0.35)] backdrop-blur">
+        <div className="grid lg:grid-cols-[1.7fr_0.95fr] gap-6">
+          <div className="hidden lg:flex flex-col justify-between rounded-[2rem] border border-white/10 bg-gradient-to-br from-indigo-600 via-violet-600 to-sky-500 p-10 text-white shadow-[0_25px_80px_-20px_rgba(15,23,42,0.35)] overflow-hidden">
+            <div className="space-y-8">
               <div className="mb-6 inline-flex items-center justify-center rounded-3xl border border-white/15 bg-white/10 px-4 py-3 text-xs font-semibold uppercase tracking-[0.32em] text-white/90 shadow-lg shadow-black/10">
                 STOKLY PRO
               </div>
-              <h2 className="text-3xl font-semibold tracking-tight leading-tight">
-                <span className="block animate-gradient-text">Gestión inteligente</span>
-                <span className="block mt-2 text-white/80">para negocios que quieren crecer.</span>
-              </h2>
-              <p className="mt-4 max-w-md text-sm leading-6 text-indigo-50/85 animate-fade-up">
-                Potencia tu inventario, ventas y análisis con un panel limpio y confiable.
-              </p>
+              <div className="space-y-4">
+                <h1 className="text-4xl font-semibold tracking-tight leading-tight">
+                  <span className="block animate-gradient-text">Gestiona tu pyme</span>
+                  <span className="block mt-2 text-white/80">desde un panel claro y profesional.</span>
+                </h1>
+                <p className="max-w-2xl text-sm leading-7 text-indigo-50/85 animate-fade-up">
+                  Centraliza inventario, ventas y clientes en una experiencia diseñada para empresas pequeñas y medianas que buscan orden y confianza.
+                </p>
+              </div>
 
-              <div className="mt-8 grid gap-3 text-sm text-indigo-50/80">
-                <div className="flex items-start gap-3">
-                  <span className="mt-1 inline-flex h-2.5 w-2.5 rounded-full bg-sky-300/90"></span>
-                  <span className="animate-fade-up text-sm leading-6">Reportes claros y decisiones rápidas.</span>
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div className="rounded-3xl border border-white/15 bg-white/10 p-5 backdrop-blur transition hover:-translate-y-1 hover:bg-white/20">
+                  <p className="text-xs uppercase tracking-[0.24em] text-slate-200/80">Ventas</p>
+                  <p className="mt-3 text-lg font-semibold text-white">+38%</p>
+                  <p className="mt-2 text-sm text-indigo-100/85">Aumento en el control de ventas.</p>
                 </div>
-                <div className="flex items-start gap-3">
-                  <span className="mt-1 inline-flex h-2.5 w-2.5 rounded-full bg-emerald-300/90"></span>
-                  <span className="animate-fade-up text-sm leading-6">Flujo de trabajo ágil pensado para tu operación.</span>
+                <div className="rounded-3xl border border-white/15 bg-white/10 p-5 backdrop-blur transition hover:-translate-y-1 hover:bg-white/20">
+                  <p className="text-xs uppercase tracking-[0.24em] text-slate-200/80">Inventario</p>
+                  <p className="mt-3 text-lg font-semibold text-white">24/7</p>
+                  <p className="mt-2 text-sm text-indigo-100/85">Acceso al stock siempre disponible.</p>
+                </div>
+                <div className="rounded-3xl border border-white/15 bg-white/10 p-5 backdrop-blur transition hover:-translate-y-1 hover:bg-white/20">
+                  <p className="text-xs uppercase tracking-[0.24em] text-slate-200/80">Decisiones</p>
+                  <p className="mt-3 text-lg font-semibold text-white">En segundos</p>
+                  <p className="mt-2 text-sm text-indigo-100/85">Insights claros para cada día.</p>
                 </div>
               </div>
             </div>
-            <div className="rounded-[2rem] border border-white/15 bg-white/10 p-5 shadow-lg shadow-black/10 backdrop-blur-xl">
-              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-100/80">Para pymes en crecimiento</p>
-              <p className="mt-3 text-sm leading-6 text-indigo-50/85 animate-fade-up">
-                Una solución pensada para pequeñas y medianas empresas que necesitan orden, control y velocidad en su día a día.
-              </p>
-              <div className="mt-4 grid gap-3 text-sm text-slate-100/80">
-                <div className="rounded-2xl bg-white/10 p-3 backdrop-blur">
-                  <p className="font-medium text-white">Implementación rápida</p>
-                  <p className="mt-1 text-xs text-indigo-100/80">Empieza a trabajar en minutos sin complicaciones.</p>
-                </div>
-                <div className="rounded-2xl bg-white/10 p-3 backdrop-blur">
-                  <p className="font-medium text-white">Soporte a tu ritmo</p>
-                  <p className="mt-1 text-xs text-indigo-100/80">Funciones útiles para comercios, servicios y distribución.</p>
-                </div>
+
+            <div className="rounded-[2rem] border border-white/15 bg-white/10 p-6 shadow-xl shadow-black/10 backdrop-blur-xl">
+              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-100/80">Tu acceso está aquí</p>
+              <p className="mt-3 text-sm leading-6 text-indigo-100/85">La sección de inicio de sesión se encuentra en la parte superior derecha para que no sea lo primero que veas.</p>
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                <button
+                  type="button"
+                  className="rounded-2xl bg-white/10 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/20"
+                  onClick={() => {
+                    setIsRegister(false);
+                    setFormError('');
+                  }}
+                >
+                  Iniciar sesión
+                </button>
+                <button
+                  type="button"
+                  className="rounded-2xl border border-white/15 bg-transparent px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+                  onClick={() => {
+                    setIsRegister(true);
+                    setFormError('');
+                  }}
+                >
+                  Regístrate
+                </button>
               </div>
             </div>
           </div>
 
-          <Card className={cardClassName}>
+          <div className="space-y-6">
+            <div className="rounded-[2rem] border border-slate-200/80 bg-white/95 p-6 shadow-lg shadow-slate-200/50 backdrop-blur-sm">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm uppercase tracking-[0.32em] text-slate-500">ACCESO</p>
+                  <h2 className="mt-2 text-2xl font-semibold text-slate-900">Inicia sesión o regístrate</h2>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    className={`rounded-full px-4 py-2 text-sm font-semibold transition ${isRegister ? 'bg-slate-200 text-slate-900' : 'bg-indigo-600 text-white hover:bg-indigo-700'}`}
+                    onClick={() => setIsRegister(false)}
+                  >
+                    Login
+                  </button>
+                  <button
+                    type="button"
+                    className={`rounded-full px-4 py-2 text-sm font-semibold transition ${isRegister ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-slate-200 text-slate-900'}`}
+                    onClick={() => setIsRegister(true)}
+                  >
+                    Registro
+                  </button>
+                </div>
+              </div>
+              <p className="mt-4 text-sm leading-6 text-slate-600">Accede a tu panel rápido o crea una cuenta nueva para comenzar a gestionar tu pyme con control y seguridad.</p>
+            </div>
+
+            <Card className={cardClassName}>
             <CardHeader className="gap-3 px-8 pt-10 pb-4 text-center sm:px-10">
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl bg-indigo-600 text-white shadow-lg shadow-indigo-200">
                 <ShieldCheck className="h-7 w-7" />
@@ -460,49 +507,49 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
               ) : (
                 <div className="grid gap-4">
                   <div className="grid gap-2">
-                  <Label htmlFor="email" className="text-sm font-medium text-slate-700">Correo electrónico</Label>
-                  <div className="relative">
-                    <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="ejemplo@correo.com"
-                      value={email}
-                      onChange={(event) => setEmail(event.target.value)}
-                      className="h-11 rounded-xl border-slate-200 pl-10 shadow-sm focus-visible:ring-indigo-500"
-                    />
-                  </div>
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="password" className="text-sm font-medium text-slate-700">Contraseña</Label>
-                  <div className="relative">
-                    <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                    <Input
-                      id="password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(event) => setPassword(event.target.value)}
-                      className="h-11 rounded-xl border-slate-200 pl-10 shadow-sm focus-visible:ring-indigo-500"
-                    />
-                  </div>
-                </div>
-                {isRegister ? (
-                  <div className="grid gap-2">
-                    <Label htmlFor="confirmPassword" className="text-sm font-medium text-slate-700">Confirmar contraseña</Label>
+                    <Label htmlFor="email" className="text-sm font-medium text-slate-700">Correo electrónico</Label>
                     <div className="relative">
-                      <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                      <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                       <Input
-                        id="confirmPassword"
-                        type="password"
-                        placeholder="Repite tu contraseña"
-                        value={confirmPassword}
-                        onChange={(event) => setConfirmPassword(event.target.value)}
+                        id="email"
+                        type="email"
+                        placeholder="ejemplo@correo.com"
+                        value={email}
+                        onChange={(event) => setEmail(event.target.value)}
                         className="h-11 rounded-xl border-slate-200 pl-10 shadow-sm focus-visible:ring-indigo-500"
                       />
                     </div>
                   </div>
-                ) : null}
+                  <div className="grid gap-2">
+                    <Label htmlFor="password" className="text-sm font-medium text-slate-700">Contraseña</Label>
+                    <div className="relative">
+                      <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                      <Input
+                        id="password"
+                        type="password"
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(event) => setPassword(event.target.value)}
+                        className="h-11 rounded-xl border-slate-200 pl-10 shadow-sm focus-visible:ring-indigo-500"
+                      />
+                    </div>
+                  </div>
+                  {isRegister ? (
+                    <div className="grid gap-2">
+                      <Label htmlFor="confirmPassword" className="text-sm font-medium text-slate-700">Confirmar contraseña</Label>
+                      <div className="relative">
+                        <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                        <Input
+                          id="confirmPassword"
+                          type="password"
+                          placeholder="Repite tu contraseña"
+                          value={confirmPassword}
+                          onChange={(event) => setConfirmPassword(event.target.value)}
+                          className="h-11 rounded-xl border-slate-200 pl-10 shadow-sm focus-visible:ring-indigo-500"
+                        />
+                      </div>
+                    </div>
+                  ) : null}
                   <Button onClick={handleEmailAuth} className="h-11 w-full rounded-xl bg-indigo-600 font-semibold text-white shadow-lg shadow-indigo-200 transition hover:bg-indigo-700" disabled={loading}>
                     {isRegister ? 'Registrarse' : 'Iniciar sesión'}
                   </Button>
