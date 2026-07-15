@@ -602,6 +602,7 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
         </div>
       </div>
     </div>
+    </div>
   );
 
 }
