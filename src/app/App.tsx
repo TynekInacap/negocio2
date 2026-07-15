@@ -3,7 +3,7 @@ import { Dashboard } from './components/Dashboard';
 import { ProductsManager } from './components/ProductsManager';
 import { SalesRegister } from './components/SalesRegister';
 import { Auth } from './components/Auth';
-import { LayoutDashboard, Package, ShoppingCart, Store } from 'lucide-react';
+import { LayoutDashboard, LogOut, Package, ShoppingCart, Store } from 'lucide-react';
 import { Toaster } from './components/ui/sonner';
 import { Button } from './components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from './components/ui/alert-dialog';
@@ -282,9 +282,13 @@ export default function App() {
       ) : (
         <div className="flex min-h-screen flex-col bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 lg:flex-row">
           {/* Sidebar */}
-          <aside className="w-full border-b border-gray-200 bg-white shadow-lg lg:w-64 lg:border-r lg:border-b-0 lg:flex lg:flex-col">
+          <aside className="w-full border-b border-gray-200 bg-white shadow-xl lg:w-64 lg:border-r lg:border-b-0 lg:flex lg:flex-col animate-soft-pop">
             {/* Header */}
-            <div className="border-b border-gray-200 bg-gradient-to-r from-indigo-600 to-blue-600 p-4 sm:p-6">
+            <div className="relative overflow-hidden border-b border-gray-200 bg-gradient-to-r from-indigo-600 to-blue-600 p-4 sm:p-6 shadow-[0_25px_80px_-40px_rgba(15,23,42,0.35)]">
+              <div className="pointer-events-none absolute inset-0 opacity-30">
+                <div className="absolute right-6 top-6 h-28 w-28 rounded-full bg-white/15 blur-3xl" />
+                <div className="absolute -bottom-10 left-4 h-32 w-32 rounded-full bg-sky-300/20 blur-3xl" />
+              </div>
               <div className="flex items-center gap-3">
                 <div className="bg-white rounded-lg p-2 shadow-md">
                   <Store className="h-6 w-6 text-indigo-600" />
@@ -294,39 +298,15 @@ export default function App() {
                   <p className="text-xs text-indigo-100">Sistema de Gestión</p>
                 </div>
               </div>
-              <div className="mt-4 flex flex-col gap-2">
+              <div className="mt-4 flex flex-col gap-3">
                 <Button
-                  className="w-full bg-white/15 text-white hover:bg-white/25"
+                  className="w-full bg-white/15 text-white transition duration-300 hover:-translate-y-0.5 hover:bg-white/25 hover:shadow-lg"
                   variant="secondary"
                   onClick={handleOpenSettings}
                 >
                   Configuración
                 </Button>
               </div>
-            </div>
-            <div className="mt-auto border-t border-gray-200 p-4">
-              <AlertDialog open={signOutDialogOpen} onOpenChange={setSignOutDialogOpen}>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    className="w-full bg-red-500 text-white hover:bg-red-600"
-                    variant="destructive"
-                  >
-                    Cerrar sesión
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>¿Cerrar sesión?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Si cierras sesión, deberás volver a ingresar con tu cuenta para acceder.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleSignOut}>Cerrar sesión</AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
             </div>
 
             {/* Navigation */}
@@ -340,13 +320,13 @@ export default function App() {
                     key={item.id}
                     onClick={() => setActiveView(item.id)}
                     className={cn(
-                      "flex w-full items-center gap-3 rounded-lg px-4 py-3 text-sm transition-all duration-200 sm:text-base",
+                      "group flex w-full items-center gap-3 rounded-lg border-l-4 px-4 py-3 text-sm transition-all duration-200 sm:text-base",
                       isActive
-                        ? "bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-md"
-                        : "text-gray-700 hover:bg-gray-100 hover:text-indigo-600"
+                        ? "bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-md border-l-indigo-500"
+                        : "border-l-transparent text-gray-700 hover:bg-gray-100 hover:text-indigo-600"
                     )}
                   >
-                    <Icon className={cn("h-5 w-5", isActive && "text-white")} />
+                    <Icon className={cn("h-5 w-5 transition duration-300", isActive ? "text-white" : "text-slate-500 group-hover:text-indigo-600")} />
                     <span className={cn(isActive && "font-medium")}>{item.label}</span>
                   </button>
                 );
@@ -354,10 +334,35 @@ export default function App() {
             </nav>
 
             {/* Footer */}
-            <div className="hidden border-t border-gray-200 p-4 lg:block">
-              <div className="rounded-lg bg-gradient-to-r from-indigo-50 to-blue-50 p-3">
-                <p className="text-xs text-gray-600">Productos totales</p>
-                <p className="text-indigo-600">{products.length}</p>
+            <div className="hidden border-t border-gray-200 p-4 lg:block animate-fade-up">
+              <div className="flex flex-col gap-3 rounded-[1.5rem] bg-white/90 p-3 shadow-sm ring-1 ring-slate-200/70 backdrop-blur-md">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Productos totales</p>
+                  <p className="text-2xl font-semibold text-slate-900">{products.length}</p>
+                </div>
+                <AlertDialog open={signOutDialogOpen} onOpenChange={setSignOutDialogOpen}>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      className="w-full inline-flex items-center justify-center rounded-lg bg-red-500 px-4 py-3 text-sm font-semibold text-white shadow-sm transition duration-300 hover:-translate-y-0.5 hover:bg-red-600"
+                      variant="destructive"
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Cerrar sesión
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>¿Cerrar sesión?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Si cierras sesión, deberás volver a ingresar con tu cuenta para acceder.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleSignOut}>Cerrar sesión</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             </div>
           </aside>
@@ -366,12 +371,12 @@ export default function App() {
           <main className="flex-1 overflow-auto">
             <div className="p-4 sm:p-6 lg:p-8">
               {loadError ? (
-                <div className="rounded-lg border border-red-200 bg-red-50 p-4 mb-6 text-sm text-red-700">
+                <div className="rounded-[1.75rem] border border-red-200 bg-red-50 p-4 mb-6 text-sm text-red-700 shadow-sm animate-fade-up">
                   {loadError}
                 </div>
               ) : null}
               <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
-                <SheetContent side="right" className="max-w-sm">
+                <SheetContent side="right" className="max-w-sm animate-soft-pop">
                   <SheetHeader>
                     <SheetTitle>Configuración</SheetTitle>
                   </SheetHeader>
@@ -398,22 +403,28 @@ export default function App() {
                 </SheetContent>
               </Sheet>
               {activeView === 'dashboard' && (
-                <Dashboard products={products} sales={sales} />
+                <div className="rounded-[2rem] bg-white/95 p-6 shadow-[0_35px_90px_-30px_rgba(15,23,42,0.2)] ring-1 ring-slate-200/70 animate-soft-pop">
+                  <Dashboard products={products} sales={sales} />
+                </div>
               )}
               {activeView === 'products' && (
-                <ProductsManager
-                  products={products}
-                  onAdd={addProduct}
-                  onUpdate={updateProduct}
-                  onDelete={deleteProduct}
-                />
+                <div className="rounded-[2rem] bg-white/95 p-6 shadow-[0_35px_90px_-30px_rgba(15,23,42,0.2)] ring-1 ring-slate-200/70 animate-soft-pop">
+                  <ProductsManager
+                    products={products}
+                    onAdd={addProduct}
+                    onUpdate={updateProduct}
+                    onDelete={deleteProduct}
+                  />
+                </div>
               )}
               {activeView === 'sales' && (
-                <SalesRegister
-                  products={products}
-                  sales={sales}
-                  onAddSale={addSale}
-                />
+                <div className="rounded-[2rem] bg-white/95 p-6 shadow-[0_35px_90px_-30px_rgba(15,23,42,0.2)] ring-1 ring-slate-200/70 animate-soft-pop">
+                  <SalesRegister
+                    products={products}
+                    sales={sales}
+                    onAddSale={addSale}
+                  />
+                </div>
               )}
             </div>
           </main>

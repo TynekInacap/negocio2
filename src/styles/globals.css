@@ -155,8 +155,17 @@
   100% { opacity: 1; transform: scale(1) translateY(0); }
 }
 
+@keyframes slide-right {
+  0% { opacity: 0; transform: translateX(-24px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
 .animate-soft-pop {
   animation: soft-pop 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-slide-right {
+  animation: slide-right 0.8s ease-out both;
 }
 
 .animate-shake {
