@@ -163,7 +163,12 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
         }
       }
     } catch (error) {
-      toast.error((error as Error).message || 'Error en autenticación');
+      const errorMessage = ((error as Error).message || '').toLowerCase();
+      if (errorMessage.includes('rate limit')) {
+        toast.error('Límite de registro alcanzado. Intenta nuevamente en unos minutos.');
+      } else {
+        toast.error((error as Error).message || 'Error en autenticación');
+      }
     } finally {
       setLoading(false);
     }
