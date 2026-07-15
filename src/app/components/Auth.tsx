@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { LogIn, ShieldCheck, Sparkles, Lock, Mail } from 'lucide-react';
+import { LogIn, Lock, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { Button } from './ui/button';
@@ -374,21 +374,21 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top_left,_rgba(129,140,248,0.18),_transparent_35%),linear-gradient(135deg,_#f8fafc_0%,_#eef2ff_45%,_#f8fafc_100%)] p-4">
-      <div className="w-full max-w-6xl overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white/90 shadow-[0_25px_80px_-20px_rgba(15,23,42,0.35)] backdrop-blur">
+    <div className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top_left,_rgba(129,140,248,0.2),_transparent_35%),radial-gradient(circle_at_bottom_right,_rgba(56,189,248,0.16),_transparent_30%),linear-gradient(180deg,_#f8fafc_0%,_#eef2ff_50%,_#f8fafc_100%)] p-6">
+      <div className="w-full max-w-6xl overflow-hidden rounded-[2.5rem] border border-slate-200/70 bg-white/95 shadow-[0_40px_120px_-60px_rgba(15,23,42,0.35)] backdrop-blur-sm">
         <div className="grid lg:grid-cols-[1.7fr_0.95fr] gap-6">
           <div className="hidden lg:flex flex-col justify-between rounded-[2rem] border border-white/10 bg-gradient-to-br from-indigo-600 via-violet-600 to-sky-500 p-10 text-white shadow-[0_25px_80px_-20px_rgba(15,23,42,0.35)] overflow-hidden">
             <div className="space-y-8">
               <div className="mb-6 inline-flex items-center justify-center rounded-3xl border border-white/15 bg-white/10 px-4 py-3 text-xs font-semibold uppercase tracking-[0.32em] text-white/90 shadow-lg shadow-black/10">
-                Stocky, la herramienta que necesitas
+                Stokly, la herramienta que necesitas
               </div>
               <div className="space-y-4">
                 <h1 className="text-4xl font-semibold tracking-tight leading-tight">
                   <span className="block animate-gradient-text">Gestiona tu pyme</span>
-                  <span className="block mt-2 text-white/80">con claridad, velocidad y control total.</span>
+                  <span className="block mt-2 text-white/80">rápido, seguro y sin complicaciones.</span>
                 </h1>
                 <p className="max-w-2xl text-sm leading-7 text-indigo-50/85 animate-fade-up">
-                  Centraliza inventario, ventas y clientes en una experiencia diseñada para empresas pequeñas y medianas que buscan orden y confianza.
+                  Una plataforma clara para controlar inventario y ventas desde el primer día.
                 </p>
               </div>
 
@@ -442,15 +442,20 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
             </div>
           </div>
 
-          <div className="space-y-6">
-            <Card className={cn(cardClassName, 'animate-fade-up bg-white/95 backdrop-blur-md ring-1 ring-slate-200/70')}>
-            <CardHeader className="gap-3 px-8 pt-10 pb-4 text-center sm:px-10 animate-fade-up">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl bg-indigo-600 text-white shadow-xl shadow-indigo-200/40 ring-1 ring-indigo-200/30">
-                <ShieldCheck className="h-7 w-7" />
-              </div>
+          <div className="space-y-6 px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
+            <Card className={cn(cardClassName, 'animate-fade-up bg-white shadow-[0_18px_60px_-30px_rgba(15,23,42,0.15)] ring-1 ring-slate-200/80')}>
+            <CardHeader className="gap-3 px-8 pt-12 pb-5 text-center sm:px-10 animate-fade-up">
               <div>
-                <CardTitle className="text-2xl font-semibold tracking-tight text-slate-900">
-                  {isRegister ? 'Crea tu cuenta en Stokly' : 'Bienvenido a Stokly'}
+                <CardTitle className="text-2xl font-semibold tracking-tight text-slate-900 transition duration-700 ease-out motion-reduce:transition-none motion-reduce:transform-none animate-slide-up">
+                  {isRegister ? (
+                    <span className="inline-block bg-gradient-to-r from-sky-600 to-indigo-500 bg-clip-text text-transparent animate-gradient-soft">
+                      Crea tu cuenta en Stokly
+                    </span>
+                  ) : (
+                    <span className="inline-block bg-gradient-to-r from-sky-600 to-indigo-500 bg-clip-text text-transparent animate-gradient-soft">
+                      Bienvenido a Stokly
+                    </span>
+                  )}
                 </CardTitle>
                 <CardDescription className="mt-6 text-sm leading-6 text-slate-500">
                   {isRegister
@@ -478,14 +483,14 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
                     <div className="flex flex-col gap-2 sm:flex-row">
                       <Button
                         onClick={() => handleBusinessNameComplete(false)}
-                        className="h-11 flex-1 rounded-xl bg-indigo-600 font-semibold text-white shadow-lg shadow-indigo-200 transition duration-300 ease-out hover:-translate-y-0.5 hover:bg-indigo-700 active:scale-[0.98]"
+                        className="h-12 flex-1 rounded-[1.25rem] bg-gradient-to-r from-sky-600 to-indigo-600 font-semibold text-white shadow-lg shadow-sky-200 transition duration-300 ease-out hover:-translate-y-0.5 hover:from-sky-700 hover:to-indigo-700 active:scale-[0.98]"
                       >
                         Guardar nombre
                       </Button>
                       <Button
                         variant="outline"
                         onClick={() => handleBusinessNameComplete(true)}
-                        className="h-11 flex-1 rounded-xl border-slate-200 bg-white text-slate-700 shadow-sm transition duration-300 ease-out hover:-translate-y-0.5 hover:bg-slate-50 active:scale-[0.98]"
+                        className="h-12 flex-1 rounded-[1.25rem] border-slate-200 bg-white text-slate-700 shadow-sm transition duration-300 ease-out hover:-translate-y-0.5 hover:bg-slate-50 active:scale-[0.98]"
                       >
                         Omitir por ahora
                       </Button>
@@ -541,7 +546,7 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
                       </div>
                     </div>
                   ) : null}
-                  <Button onClick={handleEmailAuth} className="h-11 w-full rounded-xl bg-indigo-600 font-semibold text-white shadow-lg shadow-indigo-200 transition duration-300 ease-out hover:-translate-y-0.5 hover:bg-indigo-700 active:scale-[0.98]" disabled={loading}>
+                  <Button onClick={handleEmailAuth} className="h-12 w-full rounded-[1.25rem] bg-gradient-to-r from-sky-600 to-indigo-600 font-semibold text-white shadow-lg shadow-sky-200 transition duration-300 ease-out hover:-translate-y-0.5 hover:from-sky-700 hover:to-indigo-700 active:scale-[0.98]" disabled={loading}>
                     {isRegister ? 'Registrarse' : 'Iniciar sesión'}
                   </Button>
                   {formError ? (
@@ -559,7 +564,7 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
               <div className="grid gap-3">
                 <Button
                   variant="outline"
-                  className="h-11 w-full justify-center rounded-xl border-slate-200 bg-white text-slate-700 shadow-sm transition duration-300 ease-out hover:-translate-y-0.5 hover:bg-slate-50 active:scale-[0.98]"
+                  className="h-12 w-full justify-center rounded-[1.25rem] border-slate-200 bg-white text-slate-700 shadow-sm transition duration-300 ease-out hover:-translate-y-0.5 hover:bg-slate-50 active:scale-[0.98]"
                   onClick={() => handleOAuth(false)}
                   disabled={loading || !client}
                 >
