@@ -77,25 +77,37 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
     if (!AudioContext) return;
 
     const context = new AudioContext();
-    const oscillator = context.createOscillator();
     const gain = context.createGain();
-
-    oscillator.connect(gain);
     gain.connect(context.destination);
 
-    oscillator.type = type === 'success' ? 'triangle' : type === 'error' ? 'sawtooth' : 'sine';
-    const frequency = type === 'success' ? 660 : type === 'error' ? 220 : 440;
-    oscillator.frequency.setValueAtTime(frequency, context.currentTime);
-    gain.gain.setValueAtTime(0.0001, context.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.2, context.currentTime + 0.01);
+    const playTone = (frequency: number, duration: number, waveform: OscillatorType, delay = 0) => {
+      const oscillator = context.createOscillator();
+      const toneGain = context.createGain();
+      oscillator.type = waveform;
+      oscillator.frequency.setValueAtTime(frequency, context.currentTime + delay);
+      toneGain.gain.setValueAtTime(0.0001, context.currentTime + delay);
+      toneGain.gain.exponentialRampToValueAtTime(0.15, context.currentTime + delay + 0.03);
+      toneGain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + delay + duration);
+      oscillator.connect(toneGain);
+      toneGain.connect(context.destination);
+      oscillator.start(context.currentTime + delay);
+      oscillator.stop(context.currentTime + delay + duration);
+    };
 
-    oscillator.start(context.currentTime);
-    oscillator.stop(context.currentTime + 0.18);
-    gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.18);
+    if (type === 'success') {
+      playTone(740, 0.26, 'triangle');
+      playTone(1040, 0.18, 'sine', 0.08);
+    } else if (type === 'error') {
+      playTone(280, 0.22, 'triangle');
+      playTone(180, 0.14, 'sine', 0.08);
+      playTone(220, 0.08, 'triangle', 0.16);
+    } else {
+      playTone(520, 0.12, 'sine');
+    }
 
     window.setTimeout(() => {
       context.close();
-    }, 300);
+    }, 500);
   };
 
   const animateFeedback = (state: 'success' | 'error') => {
@@ -104,12 +116,12 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
   };
 
   const cardClassName = cn(
-    'border-0 bg-transparent shadow-none transform transition duration-500 ease-out',
+    'border-0 bg-transparent shadow-xl shadow-slate-200/40 transform transition duration-500 ease-out',
     visualState === 'success'
       ? 'animate-success-glow border-lime-300/70 shadow-lime-200/30 ring-2 ring-lime-200/70'
       : visualState === 'error'
-      ? 'animate-shake border-red-300/80 shadow-red-200/30 ring-1 ring-red-300/40'
-      : 'shadow-none',
+      ? 'animate-shake border-rose-300/80 shadow-rose-200/30 ring-1 ring-rose-300/40'
+      : 'hover:-translate-y-1 hover:shadow-2xl',
   );
 
   const handleModeToggle = () => {
@@ -366,16 +378,46 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
           <div className="hidden lg:flex flex-col justify-between rounded-[2rem] border border-white/10 bg-gradient-to-br from-indigo-600 via-violet-600 to-sky-500 p-10 text-white shadow-[0_25px_80px_-20px_rgba(15,23,42,0.35)] overflow-hidden">
             <div className="space-y-8">
               <div className="mb-6 inline-flex items-center justify-center rounded-3xl border border-white/15 bg-white/10 px-4 py-3 text-xs font-semibold uppercase tracking-[0.32em] text-white/90 shadow-lg shadow-black/10">
-                STOKLY PRO
+                Stocky, la herramienta que necesitas
               </div>
               <div className="space-y-4">
                 <h1 className="text-4xl font-semibold tracking-tight leading-tight">
                   <span className="block animate-gradient-text">Gestiona tu pyme</span>
-                  <span className="block mt-2 text-white/80">desde un panel claro y profesional.</span>
+                  <span className="block mt-2 text-white/80">con claridad, velocidad y control total.</span>
                 </h1>
                 <p className="max-w-2xl text-sm leading-7 text-indigo-50/85 animate-fade-up">
                   Centraliza inventario, ventas y clientes en una experiencia diseñada para empresas pequeñas y medianas que buscan orden y confianza.
                 </p>
+              </div>
+
+              <div className="grid gap-4 rounded-3xl border border-white/10 bg-white/10 p-5 shadow-lg shadow-black/10 backdrop-blur-sm">
+                <div className="flex items-start gap-3">
+                  <span className="mt-1 inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-white/15 text-white">
+                    ✓
+                  </span>
+                  <div>
+                    <p className="text-sm font-semibold text-white">Inventario en tiempo real</p>
+                    <p className="mt-1 text-sm text-indigo-100/85">Sabe qué entra y qué sale sin sorpresas.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="mt-1 inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-white/15 text-white">
+                    ⚡
+                  </span>
+                  <div>
+                    <p className="text-sm font-semibold text-white">Ventas con seguimiento claro</p>
+                    <p className="mt-1 text-sm text-indigo-100/85">Visualiza tus ingresos con informes rápidos.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="mt-1 inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-white/15 text-white">
+                    📱
+                  </span>
+                  <div>
+                    <p className="text-sm font-semibold text-white">Control desde cualquier lugar</p>
+                    <p className="mt-1 text-sm text-indigo-100/85">Accede a tu negocio con rapidez y seguridad.</p>
+                  </div>
+                </div>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-3">
@@ -396,72 +438,19 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
                 </div>
               </div>
             </div>
-
-            <div className="rounded-[2rem] border border-white/15 bg-white/10 p-6 shadow-xl shadow-black/10 backdrop-blur-xl">
-              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-100/80">Tu acceso está aquí</p>
-              <p className="mt-3 text-sm leading-6 text-indigo-100/85">La sección de inicio de sesión se encuentra en la parte superior derecha para que no sea lo primero que veas.</p>
-              <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                <button
-                  type="button"
-                  className="rounded-2xl bg-white/10 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/20"
-                  onClick={() => {
-                    setIsRegister(false);
-                    setFormError('');
-                  }}
-                >
-                  Iniciar sesión
-                </button>
-                <button
-                  type="button"
-                  className="rounded-2xl border border-white/15 bg-transparent px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
-                  onClick={() => {
-                    setIsRegister(true);
-                    setFormError('');
-                  }}
-                >
-                  Regístrate
-                </button>
-              </div>
-            </div>
           </div>
 
           <div className="space-y-6">
-            <div className="rounded-[2rem] border border-slate-200/80 bg-white/95 p-6 shadow-lg shadow-slate-200/50 backdrop-blur-sm">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-sm uppercase tracking-[0.32em] text-slate-500">ACCESO</p>
-                  <h2 className="mt-2 text-2xl font-semibold text-slate-900">Inicia sesión o regístrate</h2>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    className={`rounded-full px-4 py-2 text-sm font-semibold transition ${isRegister ? 'bg-slate-200 text-slate-900' : 'bg-indigo-600 text-white hover:bg-indigo-700'}`}
-                    onClick={() => setIsRegister(false)}
-                  >
-                    Login
-                  </button>
-                  <button
-                    type="button"
-                    className={`rounded-full px-4 py-2 text-sm font-semibold transition ${isRegister ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-slate-200 text-slate-900'}`}
-                    onClick={() => setIsRegister(true)}
-                  >
-                    Registro
-                  </button>
-                </div>
-              </div>
-              <p className="mt-4 text-sm leading-6 text-slate-600">Accede a tu panel rápido o crea una cuenta nueva para comenzar a gestionar tu pyme con control y seguridad.</p>
-            </div>
-
-            <Card className={cardClassName}>
-            <CardHeader className="gap-3 px-8 pt-10 pb-4 text-center sm:px-10">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl bg-indigo-600 text-white shadow-lg shadow-indigo-200">
+            <Card className={cn(cardClassName, 'animate-fade-up bg-white/95 backdrop-blur-md ring-1 ring-slate-200/70')}>
+            <CardHeader className="gap-3 px-8 pt-10 pb-4 text-center sm:px-10 animate-fade-up">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl bg-indigo-600 text-white shadow-xl shadow-indigo-200/40 ring-1 ring-indigo-200/30">
                 <ShieldCheck className="h-7 w-7" />
               </div>
               <div>
                 <CardTitle className="text-2xl font-semibold tracking-tight text-slate-900">
                   {isRegister ? 'Crea tu cuenta en Stokly' : 'Bienvenido a Stokly'}
                 </CardTitle>
-                <CardDescription className="mt-2 text-sm leading-6 text-slate-500">
+                <CardDescription className="mt-6 text-sm leading-6 text-slate-500">
                   {isRegister
                     ? 'Regístrate para empezar a gestionar tu inventario y ventas.'
                     : 'Inicia sesión para continuar con tu panel de control.'}
@@ -469,7 +458,7 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
               </div>
             </CardHeader>
 
-            <CardContent className="px-8 pb-6 sm:px-10">
+            <CardContent className="px-8 pb-6 sm:px-10 animate-fade-up">
               {showBusinessNameSetup ? (
                 <div className="rounded-2xl border border-indigo-100 bg-indigo-50/80 p-4 shadow-sm">
                   <p className="text-sm font-semibold text-slate-900">Personaliza el nombre de tu negocio</p>
@@ -487,14 +476,14 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
                     <div className="flex flex-col gap-2 sm:flex-row">
                       <Button
                         onClick={() => handleBusinessNameComplete(false)}
-                        className="h-11 flex-1 rounded-xl bg-indigo-600 font-semibold text-white shadow-lg shadow-indigo-200 transition hover:bg-indigo-700"
+                        className="h-11 flex-1 rounded-xl bg-indigo-600 font-semibold text-white shadow-lg shadow-indigo-200 transition duration-300 ease-out hover:-translate-y-0.5 hover:bg-indigo-700 active:scale-[0.98]"
                       >
                         Guardar nombre
                       </Button>
                       <Button
                         variant="outline"
                         onClick={() => handleBusinessNameComplete(true)}
-                        className="h-11 flex-1 rounded-xl border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50"
+                        className="h-11 flex-1 rounded-xl border-slate-200 bg-white text-slate-700 shadow-sm transition duration-300 ease-out hover:-translate-y-0.5 hover:bg-slate-50 active:scale-[0.98]"
                       >
                         Omitir por ahora
                       </Button>
@@ -550,7 +539,7 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
                       </div>
                     </div>
                   ) : null}
-                  <Button onClick={handleEmailAuth} className="h-11 w-full rounded-xl bg-indigo-600 font-semibold text-white shadow-lg shadow-indigo-200 transition hover:bg-indigo-700" disabled={loading}>
+                  <Button onClick={handleEmailAuth} className="h-11 w-full rounded-xl bg-indigo-600 font-semibold text-white shadow-lg shadow-indigo-200 transition duration-300 ease-out hover:-translate-y-0.5 hover:bg-indigo-700 active:scale-[0.98]" disabled={loading}>
                     {isRegister ? 'Registrarse' : 'Iniciar sesión'}
                   </Button>
                   {formError ? (
@@ -568,7 +557,7 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
               <div className="grid gap-3">
                 <Button
                   variant="outline"
-                  className="h-11 w-full justify-center rounded-xl border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50"
+                  className="h-11 w-full justify-center rounded-xl border-slate-200 bg-white text-slate-700 shadow-sm transition duration-300 ease-out hover:-translate-y-0.5 hover:bg-slate-50 active:scale-[0.98]"
                   onClick={() => handleOAuth(false)}
                   disabled={loading || !client}
                 >
@@ -583,7 +572,7 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
               ) : null}
             </CardContent>
 
-            <CardFooter className="flex flex-col gap-3 px-8 pb-10 pt-2 sm:px-10">
+            <CardFooter className="flex flex-col gap-3 px-8 pb-10 pt-2 sm:px-10 animate-fade-up">
               <div className="flex items-center justify-center gap-2 text-sm text-slate-500">
                 <span>{isRegister ? '¿Ya tienes cuenta?' : '¿Aún no tienes cuenta?'}</span>
                 <button
