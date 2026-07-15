@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { LogIn, ShieldCheck, Sparkles, Lock, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -65,6 +65,8 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
   const [loading, setLoading] = useState(false);
   const [showBusinessNameSetup, setShowBusinessNameSetup] = useState(false);
   const [businessNameInput, setBusinessNameInput] = useState('');
+  const [authCooldown, setAuthCooldown] = useState(false);
+  const [cooldownSeconds, setCooldownSeconds] = useState(0);
 
   const handleBusinessNameComplete = (skip = false) => {
     const normalizedEmail = email.trim().toLowerCase();
@@ -77,28 +79,40 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
   };
 
   const handleEmailAuth = async () => {
+    const normalizedEmail = email.trim().toLowerCase();
     console.log('handleEmailAuth', {
       isRegister,
-      email,
+      email: normalizedEmail,
       passwordPresent: Boolean(password),
       confirmPasswordPresent: Boolean(confirmPassword),
       clientPresent: Boolean(client),
       isLocal,
     });
 
-    if (!email.trim() || !password) {
+    if (!normalizedEmail || !password) {
       toast.error('Ingresa correo y contraseña');
       return;
     }
 
-    console.log('register attempt', { email, password, confirmPassword, isRegister, clientPresent: Boolean(client) });
+    if (isRegister && password !== confirmPassword) {
+      toast.error('Las contraseñas no coinciden');
+      return;
+    }
+
+    console.log('register attempt', { email: normalizedEmail, password, confirmPassword, isRegister, clientPresent: Boolean(client) });
+
+    if (authCooldown) {
+      toast.error('Demasiados intentos. Espera un momento antes de volver a intentarlo.');
+      return;
+    }
 
     setLoading(true);
 
     try {
       if (!client || isLocal) {
+        const normalizedEmail = email.trim().toLowerCase();
         const users = readLocalUsers();
-        const existingUser = users.find((user) => user.email === email.trim().toLowerCase());
+        const existingUser = users.find((user) => user.email === normalizedEmail);
 
         if (isRegister) {
           if (existingUser) {
@@ -106,9 +120,9 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
             return;
           }
 
-          const nextUsers = [...users, { email: email.trim().toLowerCase(), password }];
+          const nextUsers = [...users, { email: normalizedEmail, password }];
           saveLocalUsers(nextUsers);
-          persistLocalSession(email);
+          persistLocalSession(normalizedEmail);
           setShowBusinessNameSetup(true);
           toast.success('Registro completo. Personaliza el nombre de tu negocio.');
           return;
@@ -128,7 +142,7 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
 
       if (isRegister) {
         const { data, error } = await client.auth.signUp({
-          email,
+          email: normalizedEmail,
           password,
         });
 
@@ -136,7 +150,15 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
 
         if (error) {
           console.error('signUp error', error);
-          throw error;
+          const errorMessage = String((error as any)?.message || '').toLowerCase();
+          if (errorMessage.includes('rate limit') || errorMessage.includes('too many requests')) {
+            toast.error('Límite de registro alcanzado. Intenta nuevamente en unos minutos.');
+            setAuthCooldown(true);
+            setCooldownSeconds(30);
+          } else {
+            toast.error((error as any)?.message || 'Error al registrar');
+          }
+          return;
         }
 
         setShowBusinessNameSetup(true);
@@ -144,7 +166,7 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
         return;
       } else {
         const { data, error } = await client.auth.signInWithPassword({
-          email,
+          email: normalizedEmail,
           password,
         });
 
@@ -152,31 +174,64 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
 
         if (error) {
           console.error('signIn error', error);
-          throw error;
+          const errorMessage = String((error as any)?.message || '').toLowerCase();
+          if (errorMessage.includes('invalid login credentials') || errorMessage.includes('invalid login')) {
+            toast.error('Correo o contraseña incorrectos');
+          } else if (errorMessage.includes('rate limit') || errorMessage.includes('too many requests')) {
+            toast.error('Demasiados intentos. Espera un momento y vuelve a intentarlo.');
+            setAuthCooldown(true);
+            setCooldownSeconds(30);
+          } else {
+            toast.error((error as any)?.message || 'Error al iniciar sesión');
+          }
+          return;
         }
 
         if (data?.user) {
-          onSuccess(data.user.email ?? email, readBusinessName(data.user.email ?? email) ?? undefined);
+          onSuccess(data.user.email ?? normalizedEmail, readBusinessName(data.user.email ?? normalizedEmail) ?? undefined);
           toast.success('Inicio de sesión exitoso.');
         } else {
           toast.error('No se pudo iniciar sesión.');
         }
       }
     } catch (error) {
-      const errorMessage = ((error as Error).message || '').toLowerCase();
-      if (errorMessage.includes('rate limit')) {
+      const errorMessage = String((error as any)?.message || '').toLowerCase();
+      if (errorMessage.includes('rate limit') || errorMessage.includes('too many requests')) {
         toast.error('Límite de registro alcanzado. Intenta nuevamente en unos minutos.');
+        setAuthCooldown(true);
+        setCooldownSeconds(30);
       } else {
-        toast.error((error as Error).message || 'Error en autenticación');
+        toast.error((error as any)?.message || 'Error en autenticación');
       }
     } finally {
       setLoading(false);
     }
   };
+  useEffect(() => {
+    if (!authCooldown || cooldownSeconds <= 0) return;
+
+    const timer = window.setInterval(() => {
+      setCooldownSeconds((current) => {
+        if (current <= 1) {
+          setAuthCooldown(false);
+          window.clearInterval(timer);
+          return 0;
+        }
+        return current - 1;
+      });
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [authCooldown, cooldownSeconds]);
 
   const handleOAuth = async (useLoginHint = false) => {
     if (!client) {
       toast.error('OAuth no está disponible en modo local');
+      return;
+    }
+
+    if (authCooldown) {
+      toast.error('Demasiados intentos. Espera un momento antes de volver a intentarlo.');
       return;
     }
 
