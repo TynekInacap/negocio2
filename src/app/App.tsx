@@ -37,6 +37,11 @@ export default function App() {
   const [notificationEmail, setNotificationEmail] = useState('');
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [signOutDialogOpen, setSignOutDialogOpen] = useState(false);
+  const [useFallbackService, setUseFallbackService] = useState(false);
+
+  const isValidUuid = (value: string) => {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+  };
 
   function readLocalSession(): string | null {
     if (typeof window === 'undefined') return null;
@@ -138,6 +143,7 @@ export default function App() {
       } catch (error) {
         console.error('Supabase load failed, falling back to local state:', error);
         setLoadError('No se pudo cargar la base de datos remota. Usando datos locales.');
+        setUseFallbackService(true);
         const { products: initialProducts, sales: initialSales } = await fallbackInventoryService.loadInitialState();
         setProducts(initialProducts);
         setSales(initialSales);
@@ -182,8 +188,9 @@ export default function App() {
   };
 
   const addProduct = async (product: Omit<Product, 'id'>) => {
+    const service = useFallbackService ? fallbackInventoryService : inventoryService;
     try {
-      const createdProduct = await inventoryService.createProduct(product);
+      const createdProduct = await service.createProduct(product);
       setProducts((currentProducts) => [...currentProducts, createdProduct]);
       toast.success('Producto creado');
     } catch (error) {
@@ -191,6 +198,7 @@ export default function App() {
       toast.error('No se pudo crear en remoto. Intentando guardar localmente.');
       try {
         const createdProduct = await fallbackInventoryService.createProduct(product);
+        setUseFallbackService(true);
         setProducts((currentProducts) => [...currentProducts, createdProduct]);
         toast.success('Producto guardado localmente');
       } catch (err) {
@@ -201,8 +209,9 @@ export default function App() {
   };
 
   const updateProduct = async (id: string, updatedProduct: Omit<Product, 'id'>) => {
+    const service = useFallbackService ? fallbackInventoryService : inventoryService;
     try {
-      const savedProduct = await inventoryService.updateProduct(id, updatedProduct);
+      const savedProduct = await service.updateProduct(id, updatedProduct);
       setProducts((currentProducts) =>
         currentProducts.map((product) => (product.id === id ? savedProduct : product))
       );
@@ -212,6 +221,7 @@ export default function App() {
       toast.error('No se pudo actualizar en remoto. Intentando guardado local.');
       try {
         const savedProduct = await fallbackInventoryService.updateProduct(id, updatedProduct);
+        setUseFallbackService(true);
         setProducts((currentProducts) =>
           currentProducts.map((product) => (product.id === id ? savedProduct : product))
         );
@@ -224,8 +234,9 @@ export default function App() {
   };
 
   const deleteProduct = async (id: string) => {
+    const service = useFallbackService ? fallbackInventoryService : inventoryService;
     try {
-      await inventoryService.deleteProduct(id);
+      await service.deleteProduct(id);
       setProducts((currentProducts) => currentProducts.filter((product) => product.id !== id));
       toast.success('Producto eliminado');
     } catch (error) {
@@ -233,6 +244,7 @@ export default function App() {
       toast.error('No se pudo eliminar en remoto. Intentando eliminar localmente.');
       try {
         await fallbackInventoryService.deleteProduct(id);
+        setUseFallbackService(true);
         setProducts((currentProducts) => currentProducts.filter((product) => product.id !== id));
         toast.success('Producto eliminado localmente');
       } catch (err) {
@@ -243,8 +255,13 @@ export default function App() {
   };
 
   const addSale = async (sale: Omit<Sale, 'id'>) => {
+    const service = useFallbackService ? fallbackInventoryService : inventoryService;
     try {
-      const createdSale = await inventoryService.createSale(sale);
+      const createdSale = await service.createSale(sale);
+
+      if (isSupabaseConfigured && !isValidUuid(createdSale.id)) {
+        throw new Error(`Invalid sale id returned from remote: ${createdSale.id}`);
+      }
 
       const updatedProducts = products.map((product) => {
         const matchingItem = sale.items.find((item) => item.productId === product.id);
@@ -264,6 +281,7 @@ export default function App() {
       toast.error('No se pudo registrar la venta en remoto. Intentando localmente.');
       try {
         const createdSale = await fallbackInventoryService.createSale(sale);
+        setUseFallbackService(true);
 
         const updatedProducts = products.map((product) => {
           const matchingItem = sale.items.find((item) => item.productId === product.id);
