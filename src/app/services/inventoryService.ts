@@ -38,6 +38,10 @@ function toDbProduct(product: Omit<Product, 'id'> & { id?: string }) {
   return rest as const;
 }
 
+function isUuid(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
 async function getCurrentUserId(client: ReturnType<typeof createSupabaseClient>) {
   const { data, error } = await client.auth.getSession();
   if (error) throw error;
@@ -201,31 +205,51 @@ export class SupabaseInventoryService implements InventoryDataService {
   }
 
   async createSale(sale: Omit<Sale, 'id'>): Promise<Sale> {
+    const currentUserId = await getCurrentUserId(this.client);
+
+    const saleRecord = {
+      date: sale.date instanceof Date ? sale.date.toISOString() : sale.date,
+      total: sale.total,
+      payment_method: sale.paymentMethod,
+      customer_name: sale.customerName ?? null,
+      user_id: currentUserId,
+    } as const;
+
     const { data: createdSaleData, error: salesError } = await this.client
       .from('sales')
-      .insert(toDbSale(sale))
-      .select()
+      .insert(saleRecord)
+      .select('id')
       .single();
 
     if (salesError) throw salesError;
     if (!createdSaleData) throw new Error('No se pudo crear la venta');
 
-    const saleId = (createdSaleData as any).id;
-    const saleItems = sale.items.map((item) => ({
-      product_id: item.productId,
-      product_name: item.productName,
-      quantity: item.quantity,
-      price: item.price,
-      subtotal: item.subtotal,
-      sale_id: saleId,
-    }));
+    const saleId = String((createdSaleData as any).id);
+    if (!isUuid(saleId)) {
+      throw new Error(`Supabase returned invalid sale UUID: ${saleId}`);
+    }
+
+    const saleItems = sale.items.map((item) => {
+      if (!isUuid(item.productId)) {
+        throw new Error(`Product ID must be a UUID for sale_items: ${item.productId}`);
+      }
+
+      return {
+        product_id: item.productId,
+        product_name: item.productName,
+        quantity: item.quantity,
+        price: item.price,
+        subtotal: item.subtotal,
+        sale_id: saleId,
+      };
+    });
 
     const { error: itemsError } = await this.client.from('sale_items').insert(saleItems);
     if (itemsError) throw itemsError;
 
     return {
       ...sale,
-      id: String(saleId),
+      id: saleId,
     };
   }
 }
