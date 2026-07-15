@@ -530,9 +530,9 @@ export default function App() {
             </div>
           </main>
 
-          <Toaster />
         </div>
       )}
+      <Toaster />
     </div>
   );
 }

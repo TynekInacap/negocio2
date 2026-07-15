@@ -202,7 +202,9 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
           saveLocalUsers(nextUsers);
           persistLocalSession(normalizedEmail);
           setShowBusinessNameSetup(true);
-          toast.success('Registro completo. Personaliza el nombre de tu negocio.');
+          toast.success('¡Bienvenido a Stokly! Tu cuenta está lista para comenzar a gestionar tus ventas y stock.');
+          playSound('success');
+          animateFeedback('success');
           return;
         } else {
           if (!existingUser || existingUser.password !== password) {
@@ -248,7 +250,7 @@ export function Auth({ client, isLocal = false, onSuccess }: AuthProps) {
         }
 
         setShowBusinessNameSetup(true);
-        toast.success('Registro realizado. Personaliza el nombre de tu negocio.');
+        toast.success('¡Bienvenido a Stokly! Tu cuenta está lista para comenzar a gestionar tus ventas y stock.');
         playSound('success');
         animateFeedback('success');
         return;
